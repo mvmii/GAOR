@@ -17,8 +17,8 @@ from selenium.webdriver.support import expected_conditions as EC
 query = "銘傳大學資訊管理學系"
 search_url = f"https://www.google.com/search?q={query}"
 
-# 使用Selenium開啟瀏覽器
-driver = webdriver.Chrome()
+# 使用Selenium開啟Edge瀏覽器
+driver = webdriver.Edge()  # 請確保已下載並設定好Edge WebDriver的路徑
 
 class YourApplication:  # 模組化
     def __init__(self, master):
