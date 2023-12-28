@@ -30,6 +30,9 @@ class YourApplication:  # 模組化
         self.master = master
         self.master.title("教授亂碼抓取器")
 
+        # 寬度和高度
+        self.master.geometry("450x500") 
+
         # 創建視窗元件pyinstaller --onefile main.py
         self.url_label = Label(master, text="亂碼網址：")
         self.url_label.pack()
