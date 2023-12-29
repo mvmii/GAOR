@@ -22,6 +22,7 @@ driver = webdriver.Edge()  # 請確保已下載並設定好Edge WebDriver的路�
 
 messageLog = ""
 
+
 class MainApplication:  # 模組化
     def __init__(self, master):
         self.messageLog = ""
@@ -87,6 +88,64 @@ class MainApplication:  # 模組化
     def url_start(self):
         # 登入
         self.login()
+        # 確認登入後，取product-item裡的product-id值，並顯示在self.result_text上
+        self.fetch_product_ids()
+
+    def fetch_product_ids(self):
+        try:
+            file_path = 'product_ids.txt'
+            web_product_ids = []
+
+            # 等待页面至少有一个 product-item 元素加载完成
+            WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.TAG_NAME, 'product-item'))
+                # EC.presence_of_all_elements_located((By.TAG_NAME, 'product-item'))
+            )
+
+            # 找到所有的 product-item 元素
+            product_items = driver.find_elements(By.TAG_NAME, 'product-item')
+
+            # 获取前五个 product-item 的 product-id 属性值
+            for item in product_items[:5]:
+                product_id = item.get_attribute('product-id')
+                if product_id:  # 确保 product_id 不是 None
+                    web_product_ids.append(product_id)
+
+            # 如果文件不存在，保存网页上的product IDs到文件
+            if not os.path.exists(file_path):
+                self.add_log("web_ID"+'\n')
+                with open(file_path, 'w') as file:
+                    for pid in web_product_ids:
+                        self.add_log(pid + '\n')
+                        file.write(pid + '\n')
+                self.add_log("网页上的前五个产品ID已保存到文件。")
+            else:
+                # 读取文件中的product IDs
+                with open(file_path, 'r') as file:
+                    file_product_ids = file.read().strip().split('\n')
+                self.add_log("file_ID"+'\n')
+                for pid in file_product_ids:
+                    self.add_log(pid+'\n')
+
+                # 比较网页和文件中的product IDs
+                if web_product_ids == file_product_ids:
+                    self.add_log("网页上的产品ID与文件中的相同。")
+                else:
+                    self.add_log("网页上的产品ID与文件中的不同。")
+                    # 如果需要更新文件内容，取消注释以下代码
+                    # with open(file_path, 'w') as file:
+                    #     for pid in web_product_ids:
+                    #         file.write(pid + '\n')
+                    # self.add_log("文件已更新。")
+
+            # 将网页上的product IDs显示到日志
+            # product_ids_text = "\n".join(web_product_ids)
+            # self.add_log(product_ids_text)
+
+        except TimeoutException:
+            self.add_log("操作超时，商品信息无法交互")
+        except Exception as e:
+            self.add_log(f"无法获取商品信息：{e}")
 
     def login(self):
         url = self.url_entry.get()
