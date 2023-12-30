@@ -9,38 +9,33 @@
 
 import os
 import tkinter as tk
-from tkinter import Entry, Label, Button, Text, Scrollbar, StringVar
+from tkinter import Entry, Label, Button, Text, Scrollbar, StringVar, OptionMenu
 from selenium import webdriver
+from selenium.webdriver.common.action_chains import ActionChains
 from selenium.common import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-
+import json
+import threading
+import re
 
 # 使用Selenium開啟Edge瀏覽器
 driver = webdriver.Edge()  # 請確保已下載並設定好Edge WebDriver的路徑
 
-messageLog = ""
-
 
 class MainApplication:  # 模組化
     def __init__(self, master):
-        self.messageLog = ""
+        # 設置變數
+        self.textMessageLog = ""
+        self.cmdMessageLog = ""
+        self.memberLoginIdUrl = "testMemberLoginId"
+
+        # 設置視窗
         self.master = master
         self.master.title("測試登入")
         # 寬度和高度
         self.master.geometry("450x500")
-
-        # 網址
-        self.url_frame = tk.Frame(master)
-        self.url_frame.pack()
-        # 輸入網址 Str
-        self.url_label = Label(self.url_frame, text="輸入網址：")
-        self.url_label.pack(side="left")
-        # 輸入網址 input
-        self.url_entry = Entry(self.url_frame, width=40)
-        self.url_entry.pack(side="right")
-        self.url_entry.insert(0, "https://www.goopi.co/users/sign_in")
 
         # 帳號
         self.inputAcc_frame = tk.Frame(master)
@@ -65,6 +60,22 @@ class MainApplication:  # 模組化
         self.sec_entry.pack(side="right")
         self.sec_entry.insert(0, "mvmii1234")
 
+        # 要讀取前幾個商品 的下拉選單
+        self.getProductCount_frame = tk.Frame(master)
+        self.getProductCount_frame.pack()
+
+        self.productCount_label = Label(self.getProductCount_frame, text="讀取")
+        self.productCount_label.pack(side="left")
+
+        self.productCount_dropdown = StringVar(self.getProductCount_frame)  # 創建變數來存儲選擇的值
+        self.productCount_dropdown.set("10")  # 設定預設值
+        self.productCount_dropdownMenu = OptionMenu(self.getProductCount_frame, self.productCount_dropdown, "10", "15",
+                                                    "20")
+        self.productCount_dropdownMenu.pack(side="left")
+        self.productCount_label2 = Label(self.getProductCount_frame, text="個商品")
+        self.productCount_label2.pack(side="left")
+
+        # 按鈕
         self.fetch_button = Button(master, text="開始", command=self.url_start)
         self.fetch_button.pack(pady=10)
 
@@ -86,75 +97,153 @@ class MainApplication:  # 模組化
         self.h1_label.pack()
 
     def url_start(self):
-        # 登入
-        self.login()
-        # 確認登入後，取product-item裡的product-id值，並顯示在self.result_text上
-        self.fetch_product_ids()
+        """
+        開始流程流程 :
+        檢查登入狀態 => 登入
+        -- 跳轉連結[https://www.goopi.co/categories/goopimade-goopi-%E5%AD%A4%E5%83%BB?sort_by=created_at&order_by=desc]
+           -- 檢查是否有新品
+              -- 有新品 : 加入購物車
+                 -- 訂單結帳
+              -- 無新品 : 跳提示語[暫無新品]
+        :return:
+        """
+        self.clear_msg()
+        self.toggle_ui_elements()
+        # 在另一個線程中啟動長時間運行的操作，因為要確保show_log能及時在result_text中顯示，帥呆了 ><
+        threading.Thread(target=self.check_login, daemon=True).start()
 
-    def fetch_product_ids(self):
-        try:
-            file_path = 'product_ids.txt'
-            web_product_ids = []
+    def toggle_ui_elements(self, state=tk.DISABLED):
+        """ 切換UI元件的可用性 """
+        elements = [self.acc_entry, self.sec_entry, self.fetch_button,
+                    self.productCount_dropdownMenu]
+        for element in elements:
+            element.config(state=state)
 
-            # 等待页面至少有一个 product-item 元素加载完成
-            WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.TAG_NAME, 'product-item'))
-                # EC.presence_of_all_elements_located((By.TAG_NAME, 'product-item'))
-            )
-
-            # 找到所有的 product-item 元素
-            product_items = driver.find_elements(By.TAG_NAME, 'product-item')
-
-            # 获取前五个 product-item 的 product-id 属性值
-            for item in product_items[:5]:
-                product_id = item.get_attribute('product-id')
-                if product_id:  # 确保 product_id 不是 None
-                    web_product_ids.append(product_id)
-
-            # 如果文件不存在，保存网页上的product IDs到文件
-            if not os.path.exists(file_path):
-                self.add_log("web_ID"+'\n')
-                with open(file_path, 'w') as file:
-                    for pid in web_product_ids:
-                        self.add_log(pid + '\n')
-                        file.write(pid + '\n')
-                self.add_log("网页上的前五个产品ID已保存到文件。")
-            else:
-                # 读取文件中的product IDs
-                with open(file_path, 'r') as file:
-                    file_product_ids = file.read().strip().split('\n')
-                self.add_log("file_ID"+'\n')
-                for pid in file_product_ids:
-                    self.add_log(pid+'\n')
-
-                # 比较网页和文件中的product IDs
-                if web_product_ids == file_product_ids:
-                    self.add_log("网页上的产品ID与文件中的相同。")
-                else:
-                    self.add_log("网页上的产品ID与文件中的不同。")
-                    # 如果需要更新文件内容，取消注释以下代码
-                    # with open(file_path, 'w') as file:
-                    #     for pid in web_product_ids:
-                    #         file.write(pid + '\n')
-                    # self.add_log("文件已更新。")
-
-            # 将网页上的product IDs显示到日志
-            # product_ids_text = "\n".join(web_product_ids)
-            # self.add_log(product_ids_text)
-
-        except TimeoutException:
-            self.add_log("操作超时，商品信息无法交互")
-        except Exception as e:
-            self.add_log(f"无法获取商品信息：{e}")
-
-    def login(self):
-        url = self.url_entry.get()
-        acc = self.acc_entry.get()
-        sec = self.sec_entry.get()
+    def check_login(self):
+        self.show_log("檢查登入狀態中...")
+        url = "https://www.goopi.co/categories/goopimade-goopi-%E5%AD%A4%E5%83%BB?sort_by=created_at&order_by=desc"
         try:
             # 加載URL
             driver.get(url)
 
+            # 取所有<a>
+            a_list = WebDriverWait(driver, 10).until(
+                EC.presence_of_all_elements_located((By.CSS_SELECTOR, '.NavigationBar-actionMenu-button.nav-color'))
+            )
+
+            href_value = None
+            for item in a_list:
+                href_value = item.get_attribute('href')
+                self.show_log(f"href_value : {href_value}", False)
+                if href_value is not None:
+                    if "/users/sign_in" in href_value:
+                        # 未登入，執行登入操作
+                        self.show_log("未登入，轉向登入頁面並登入中...")
+                        driver.get(href_value)
+                        self.login()
+                        # self.show_log("暫時假裝登入成功!!")
+                        # self.fetch_product_ids()
+                        break  # 中斷迴圈
+                    else:
+                        # 已登入
+                        self.update_member_login_id_url(href_value)
+                        # 使用正则表达式提取编码
+                        match = re.search(r'/users/(\w+)/edit', href_value)
+                        if match:
+                            code = match.group(1)
+                            self.show_log(f"已登入。會員編號Url : {code}。導頁至GOOPI-GOOPIMADE頁面。")
+                            self.fetch_product_ids()
+                            break  # 中斷迴圈
+                        else:
+                            href_value = None
+            if href_value is None:
+                self.show_log("無法獲取登入按鈕標籤，請求大美女工程師協助。")
+        except TimeoutException:
+            self.show_log("操作超時，無法[檢查登入]狀態。")
+        except Exception as e:
+            self.show_log(f"無法確定[檢查登入]狀態：{e}")
+
+    def fetch_product_ids(self):
+        file_path = 'info.json'
+        new_product_items = []
+        try:
+            selected_value = int(self.productCount_dropdown.get())  # 獲取當前選擇的值
+
+            # 獲取前10個 product-item 元素
+            product_items = WebDriverWait(driver, 10).until(
+                EC.presence_of_all_elements_located((By.TAG_NAME, 'product-item'))
+            )[:selected_value]
+
+            current_product_items = []
+            for index, item in enumerate(product_items, start=1):
+                product_id = item.get_attribute('product-id')
+                product_name_element = item.find_element(By.CSS_SELECTOR, ".title.text-primary-color")
+                product_name = product_name_element.text if product_name_element else "未知產品名稱"
+                product_url = item.find_element(By.TAG_NAME, 'a').get_attribute('href')
+                product_status_elements = item.find_elements(By.CSS_SELECTOR, ".sold-out-item")
+                product_status = 1 if product_status_elements else 0  # 如果列表不為空，則產品售罄
+                current_product_items.append({
+                    "index": index,
+                    "pId": product_id,
+                    "pName": product_name,
+                    "pUrl": product_url,
+                    "pStatus": product_status
+                })
+
+            # 檢查是否存在 info.json 檔案
+            if not os.path.exists(file_path):
+                # 直接儲存到 JSON 中
+                info = {"memberIdUrl": self.memberLoginIdUrl, "oldProductItems": current_product_items}
+                with open(file_path, 'w') as file:
+                    json.dump(info, file, indent=4)
+                self.show_log("首次記錄產品ID。不下單")
+            else:
+                # 從檔案中讀取 oldProductItems 並進行比對
+                with open(file_path, 'r') as file:
+                    info = json.load(file)
+                old_product_items = info.get("oldProductItems", [])
+
+                for current_product_item in current_product_items:
+                    if not old_product_items or current_product_item["pId"] != old_product_items[0]["pId"]:
+                        new_product_items.append(current_product_item)
+                        self.show_log(f"發現新產品ID : {current_product_item['pName']}")
+                    else:
+                        break
+                self.show_log("測試結束")
+                self.master.after(0, self.toggle_ui_elements, tk.NORMAL)
+        except TimeoutException:
+            self.show_log("操作超時，無法[讀取商品ID]")
+        except Exception as e:
+            self.show_log(f"無法[讀取商品ID]：{e}")
+
+    def update_member_login_id_url(self, new_member_login_id_url):
+        if self.memberLoginIdUrl != new_member_login_id_url:
+            self.memberLoginIdUrl = new_member_login_id_url
+            self.save_info_to_json()
+        else:
+            self.show_log("memberLoginIdUrl已存在，暫不更新。")
+
+    def save_info_to_json(self, new_product_items=None):
+        info = {"memberIdUrl": self.memberLoginIdUrl, "oldProductItems": []}
+        file_path = 'info.json'
+        # 如果 info.json 文件存在，則讀取原有內容
+        if os.path.exists(file_path):
+            with open(file_path, 'r') as file:
+                info = json.load(file)
+
+        # 如果有新的產品項目，則更新當前oldProductItems替換為new_product_items
+        if new_product_items:
+            info["oldProductItems"] = new_product_items
+
+        # 將更新後的資料儲存到 JSON 文件中
+        with open(file_path, 'w') as file:
+            json.dump(info, file, indent=4)
+        self.show_log(f"存檔成功，商品數量：{len(info['oldProductItems'])}")
+
+    def login(self):
+        acc = self.acc_entry.get()
+        sec = self.sec_entry.get()
+        try:
             # 帳號輸入
             WebDriverWait(driver, 10).until(
                 EC.visibility_of_element_located((By.NAME, 'mobile_phone_or_email'))
@@ -180,17 +269,25 @@ class MainApplication:  # 模組化
             # 找到登入按鈕並點擊
             login_button = driver.find_element(By.CSS_SELECTOR, "button[data-e2e-id='login-submit_button']")
             login_button.click()
-            self.add_log("登入成功!")
+            self.show_log("[登入]成功!")
+            self.fetch_product_ids()
         except TimeoutException:
-            self.add_log("登入失敗 : 操作超時，元素無法交互")
+            self.show_log("[登入]失敗 : 操作超時，元素無法交互")
         except Exception as e:
-            self.add_log(f"登入失敗 : 無法獲取亂碼：{e}")
+            self.show_log(f"[登入]失敗 : 無法獲取亂碼：{e}")
 
-    def add_log(self, msg):
-        self.messageLog += (msg + "\n")
-        self.result_text.delete(1.0, "end")
-        self.result_text.insert("end", self.messageLog)
-        print(self.messageLog)
+    def show_log(self, msg, show_on_text=True):
+        if show_on_text:
+            self.textMessageLog += (msg + "\n")
+            self.result_text.delete(1.0, "end")
+            self.result_text.insert("end", self.textMessageLog)
+        self.cmdMessageLog += (msg + "\n")
+        print(self.cmdMessageLog)
+
+    def clear_msg(self):
+        self.textMessageLog = ""
+        self.result_text.insert("end", self.textMessageLog)
+
 
 if __name__ == "__main__":
     root = tk.Tk()
