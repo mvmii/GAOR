@@ -11,7 +11,7 @@ import os
 import tkinter as tk
 from tkinter import Entry, Label, Button, Text, Scrollbar, StringVar, OptionMenu
 from selenium import webdriver
-from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.edge.options import Options
 from selenium.common import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -20,8 +20,13 @@ import json
 import threading
 import re
 
+# 配置無頭模式
+edge_options = Options()
+edge_options.add_argument("--headless")  # 啟用無頭模式
+edge_options.add_argument("--disable-gpu")  # 在無頭模式下，禁用 GPU 加速有時是必要的
+
 # 使用Selenium開啟Edge瀏覽器
-driver = webdriver.Edge()  # 請確保已下載並設定好Edge WebDriver的路徑
+driver = webdriver.Edge(options=edge_options)  # 確保已下載並設定好Edge WebDriver的路徑
 
 
 class MainApplication:  # 模組化
