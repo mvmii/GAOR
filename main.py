@@ -40,34 +40,41 @@ class MainApplication:  # 模組化
         self.master = master
         self.master.title("測試登入")
         # 寬度和高度
-        self.master.geometry("450x500")
+        self.master.geometry("600x350")
+        # 禁止水平和垂直的視窗大小調整
+        self.master.resizable(False, False)
 
-        # 帳號
-        self.inputAcc_frame = tk.Frame(master)
-        self.inputAcc_frame.pack()
+        # 创建一个PanedWindow小部件作为主要容器
+        self.master.paned_window = tk.PanedWindow(master, orient=tk.HORIZONTAL)
+        self.master.paned_window.pack(fill=tk.BOTH, expand=True)
+
+        # 左边的框架，用于放置标签和输入框
+        self.master.left_frame = tk.Frame(self.master.paned_window)
+        self.master.paned_window.add(self.master.left_frame)
+
+        # 右边的框架，用于放置操作消息文本框
+        self.master.right_frame = tk.Frame(self.master.paned_window)
+        self.master.paned_window.add(self.master.right_frame)
+
         # 輸入帳號 Str
-        self.acc_label = Label(self.inputAcc_frame, text="帳號：")
-        self.acc_label.pack(side="left")
+        self.acc_label = Label(self.master.left_frame, text="帳號：")
+        self.acc_label.grid(row=1, column=0, sticky="w", padx=10, pady=2)
         # 輸入帳號 input
-        self.acc_entry = Entry(self.inputAcc_frame, width=40)
-        self.acc_entry.pack(side="right")
+        self.acc_entry = Entry(self.master.left_frame, width=30)
+        self.acc_entry.grid(row=1, column=1, sticky="we", padx=10, pady=2)
         self.acc_entry.insert(0, "love_8462564@yahoo.com.tw")
 
-        # 密碼
-        self.inputSec_frame = tk.Frame(master)
-        self.inputSec_frame.pack()
         # 輸入密碼 Str
-        self.sec_label = Label(self.inputSec_frame, text="密碼：")
-        self.sec_label.pack(side="left")
+        self.sec_label = Label(self.master.left_frame, text="密碼：")
+        self.sec_label.grid(row=2, column=0, sticky="w", padx=10, pady=2)
         # 輸入密碼 input
-        # self.sec_entry = Entry(self.inputSec_frame, width=40)  # show="*" 用于隐藏输入的密码
-        self.sec_entry = Entry(self.inputSec_frame, width=40)
-        self.sec_entry.pack(side="right")
+        self.sec_entry = Entry(self.master.left_frame, width=30)
+        self.sec_entry.grid(row=2, column=1, sticky="we", padx=10, pady=2)
         self.sec_entry.insert(0, "mvmii1234")
 
         # 要讀取前幾個商品 的下拉選單
-        self.getProductCount_frame = tk.Frame(master)
-        self.getProductCount_frame.pack()
+        self.getProductCount_frame = tk.Frame(self.master.left_frame)
+        self.getProductCount_frame.grid(row=3, column=0, columnspan=2, sticky="we", padx=10, pady=10)
 
         self.productCount_label = Label(self.getProductCount_frame, text="讀取")
         self.productCount_label.pack(side="left")
@@ -81,25 +88,18 @@ class MainApplication:  # 模組化
         self.productCount_label2.pack(side="left")
 
         # 按鈕
-        self.fetch_button = Button(master, text="開始", command=self.url_start)
-        self.fetch_button.pack(pady=10)
-
-        # 創建一個 Frame 來包裝 Text 和 Scrollbar
-        self.result_frame = tk.Frame(master)
-        self.result_frame.pack(fill="both", expand=True)
-
-        # Text
-        self.result_text = Text(self.result_frame, wrap="word", height=5, width=50)
-        self.result_text.pack(side="left", fill="both", expand=True)
+        self.fetch_button = Button(self.master.left_frame, text="開始", command=self.url_start)
+        self.fetch_button.grid(row=4, column=0, columnspan=2, sticky="we", padx=10, pady=10)
 
         # Scrollbar
-        self.scrollbar = Scrollbar(self.result_frame, command=self.result_text.yview)
-        self.scrollbar.pack(side="right", fill="y")
-        self.result_text.config(yscrollcommand=self.scrollbar.set)
+        self.scrollbar = Scrollbar(self.master.right_frame)
+        self.scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
-        # Label顯示抓取的H1標籤內容
-        self.h1_label = Label(master, text="")
-        self.h1_label.pack()
+        # Text
+        self.message_box = Text(self.master.right_frame, yscrollcommand=self.scrollbar.set)
+        self.message_box.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        self.message_box.config(state=tk.DISABLED)  # 默认不可编辑
+        self.scrollbar.config(command=self.message_box.yview)
 
     def url_start(self):
         """
@@ -284,17 +284,20 @@ class MainApplication:  # 模組化
     def show_log(self, msg, show_on_text=True):
         if show_on_text:
             self.textMessageLog += (msg + "\n")
-            self.result_text.delete(1.0, "end")
-            self.result_text.insert("end", self.textMessageLog)
+            self.message_box.config(state=tk.NORMAL)  # 允许写入
+            self.message_box.delete(1.0, "end")
+            self.message_box.insert("end", self.textMessageLog)
+            self.message_box.config(state=tk.DISABLED)  # 禁止写入
         self.cmdMessageLog += (msg + "\n")
         print(self.cmdMessageLog)
 
     def clear_msg(self):
         self.textMessageLog = ""
-        self.result_text.insert("end", self.textMessageLog)
+        self.message_box.insert("end", self.textMessageLog)
 
 
 if __name__ == "__main__":
+    # 创建主窗口
     root = tk.Tk()
     app = MainApplication(root)
     root.mainloop()
