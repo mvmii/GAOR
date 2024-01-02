@@ -35,12 +35,20 @@ class MainApplication:  # 模組化
         self.textMessageLog = ""
         self.cmdMessageLog = ""
         self.memberLoginIdUrl = "testMemberLoginId"
+        self.current_row = 1
+        # 使用字典來儲存產品條目和尺寸下拉選單
+        self.product_ky = {}  # key為索引，value為(product_entry, size_dropdown)元組
+        # 初始化新增次數
+        self.add_ky_count = 0
+        self.blank_px = 18
+        self.px = 5
+        self.py = 2
 
         # 設置視窗
         self.master = master
         self.master.title("測試登入")
         # 寬度和高度
-        self.master.geometry("600x350")
+        self.master.geometry("650x400")
         # 禁止水平和垂直的視窗大小調整
         self.master.resizable(False, False)
 
@@ -56,40 +64,56 @@ class MainApplication:  # 模組化
         self.master.right_frame = tk.Frame(self.master.paned_window)
         self.master.paned_window.add(self.master.right_frame)
 
+        self.n1_label = Label(self.master.left_frame, text="  ")
+        self.n1_label.grid(row=self.current_row, column=0, sticky="we", padx=self.blank_px, pady=self.py)
+        self.n2_label = Label(self.master.left_frame, text="  ")
+        self.n2_label.grid(row=self.current_row, column=1, sticky="we", padx=self.blank_px, pady=self.py)
+        self.n3_label = Label(self.master.left_frame, text="  ")
+        self.n3_label.grid(row=self.current_row, column=2, sticky="we", padx=self.blank_px, pady=self.py)
+        self.n4_label = Label(self.master.left_frame, text="  ")
+        self.n4_label.grid(row=self.current_row, column=3, sticky="we", padx=self.blank_px, pady=self.py)
+        self.n5_label = Label(self.master.left_frame, text="  ")
+        self.n5_label.grid(row=self.current_row, column=4, sticky="we", padx=self.blank_px, pady=self.py)
+        self.n6_label = Label(self.master.left_frame, text="  ")
+        self.n6_label.grid(row=self.current_row, column=5, sticky="we", padx=self.blank_px, pady=self.py)
+        self.current_row += 1
+
         # 輸入帳號 Str
         self.acc_label = Label(self.master.left_frame, text="帳號：")
-        self.acc_label.grid(row=1, column=0, sticky="w", padx=10, pady=2)
+        self.acc_label.grid(row=self.current_row, column=0, sticky="w", padx=self.px, pady=self.py)
         # 輸入帳號 input
         self.acc_entry = Entry(self.master.left_frame, width=30)
-        self.acc_entry.grid(row=1, column=1, sticky="we", padx=10, pady=2)
+        self.acc_entry.grid(row=self.current_row, column=1, sticky="we", padx=self.px, pady=self.py, columnspan=4)
         self.acc_entry.insert(0, "love_8462564@yahoo.com.tw")
+        self.current_row += 1
 
         # 輸入密碼 Str
         self.sec_label = Label(self.master.left_frame, text="密碼：")
-        self.sec_label.grid(row=2, column=0, sticky="w", padx=10, pady=2)
+        self.sec_label.grid(row=self.current_row, column=0, sticky="w", padx=self.px, pady=self.py)
         # 輸入密碼 input
         self.sec_entry = Entry(self.master.left_frame, width=30)
-        self.sec_entry.grid(row=2, column=1, sticky="we", padx=10, pady=2)
+        self.sec_entry.grid(row=self.current_row, column=1, sticky="we", padx=self.px, pady=self.py, columnspan=4)
         self.sec_entry.insert(0, "mvmii1234")
+        self.current_row += 1
 
-        # 要讀取前幾個商品 的下拉選單
-        self.getProductCount_frame = tk.Frame(self.master.left_frame)
-        self.getProductCount_frame.grid(row=3, column=0, columnspan=2, sticky="we", padx=10, pady=10)
+        # 新增
+        self.add_ky_button = Button(self.master.left_frame, text="新增篩選商品", command=self.add_product_ky)
+        self.add_ky_button.grid(row=self.current_row, column=0, columnspan=2, sticky="we", padx=self.px, pady=self.py)
+        # 開始
+        self.start_button = Button(self.master.left_frame, text="開始", command=self.url_start)
+        self.start_button.grid(row=self.current_row, column=2, sticky="we", padx=self.px, pady=self.py)
+        # 結束
+        self.end_button = Button(self.master.left_frame, text="結束")
+        self.end_button.grid(row=self.current_row, column=3, sticky="we", padx=self.px, pady=self.py)
+        self.current_row += 1
 
-        self.productCount_label = Label(self.getProductCount_frame, text="讀取")
-        self.productCount_label.pack(side="left")
-
-        self.productCount_dropdown = StringVar(self.getProductCount_frame)  # 創建變數來存儲選擇的值
-        self.productCount_dropdown.set("10")  # 設定預設值
-        self.productCount_dropdownMenu = OptionMenu(self.getProductCount_frame, self.productCount_dropdown, "10", "15",
-                                                    "20")
-        self.productCount_dropdownMenu.pack(side="left")
-        self.productCount_label2 = Label(self.getProductCount_frame, text="個商品")
-        self.productCount_label2.pack(side="left")
-
-        # 按鈕
-        self.fetch_button = Button(self.master.left_frame, text="開始", command=self.url_start)
-        self.fetch_button.grid(row=4, column=0, columnspan=2, sticky="we", padx=10, pady=10)
+        self.input_ky_label = Label(self.master.left_frame, text="輸入要買的新品關鍵字(含顏色)")
+        self.input_ky_label.grid(row=self.current_row, column=0, sticky="we", padx=self.px, pady=self.py, columnspan=3)
+        self.input_size_label = Label(self.master.left_frame, text="尺寸")
+        self.input_size_label.grid(row=self.current_row, column=3, sticky="we", padx=self.px, pady=self.py)
+        self.input_delete_label = Label(self.master.left_frame, text="刪除")
+        self.input_delete_label.grid(row=self.current_row, column=4, sticky="we", padx=self.px, pady=self.py)
+        self.current_row += 1
 
         # Scrollbar
         self.scrollbar = Scrollbar(self.master.right_frame)
@@ -100,6 +124,59 @@ class MainApplication:  # 模組化
         self.message_box.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         self.message_box.config(state=tk.DISABLED)  # 默认不可编辑
         self.scrollbar.config(command=self.message_box.yview)
+
+    def add_product_ky(self):
+        # 限制最大添加次數為5
+        if self.add_ky_count < 5:
+            index = self.add_ky_count  # 捕獲當前索引
+            # 創建新的產品名稱輸入框
+            ky_entry = Entry(self.master.left_frame)
+            ky_entry.grid(row=self.current_row, column=0, padx=self.px, pady=self.py, columnspan=3, sticky="we")
+
+            # 創建新的尺寸下拉選單
+            size_var = StringVar(self.master.left_frame)
+            size_var.set("無")
+            size_dropdown = OptionMenu(self.master.left_frame, size_var, "M", "L", "XL")
+            size_dropdown.grid(row=self.current_row, column=3, padx=self.px, pady=self.py, sticky="w")
+
+            delete_button = Button(self.master.left_frame, text="刪除",
+                                   command=lambda: self.delete_ky_button(index))
+            delete_button.grid(row=self.current_row, column=4, sticky="we", padx=self.px, pady=self.py)
+
+            # 使用索引作為字典鍵
+            self.product_ky[index] = (ky_entry, (size_var, size_dropdown), delete_button)
+            # 更新新增次數
+            self.add_ky_count += 1
+            self.current_row += 1  # 確保每次新增元素都在新的行
+        else:
+            self.add_ky_button.config(text='無法新增，我就爛')
+            self.add_ky_button.config(state='disabled')
+
+    def delete_ky_button(self, index):
+        # 刪除特定索引的元素
+        ky_entry, size_dropdown_tuple, delete_btn = self.product_ky[index]
+        ky_entry.destroy()
+        size_dropdown_tuple[1].destroy()
+        delete_btn.destroy()
+        del self.product_ky[index]
+
+        # 重新安排剩餘元素的索引
+        old_keys = sorted(self.product_ky.keys())
+        for old_index in old_keys:
+            if old_index > index:
+                new_index = old_index - 1
+                self.product_ky[new_index] = self.product_ky.pop(old_index)
+                # 更新刪除按鈕的命令以反映新索引，将索引作为默认参数传递给 lambda 函数
+                _, _, delete_btn = self.product_ky[new_index]
+                delete_btn.config(command=lambda idx=new_index: self.delete_ky_button(idx))
+
+        # 更新 add_ky_count 的值
+        self.add_ky_count = len(self.product_ky)
+
+        # 檢查條件並更新 add_ky_button 的狀態
+        if self.add_ky_count < 5 and self.add_ky_button['state'] == 'disabled':
+            self.add_ky_button['state'] = 'normal'
+            self.add_ky_button.config(text='新增篩選商品')
 
     def url_start(self):
         """
@@ -116,11 +193,18 @@ class MainApplication:  # 模組化
         self.toggle_ui_elements()
         # 在另一個線程中啟動長時間運行的操作，因為要確保show_log能及時在result_text中顯示，帥呆了 ><
         threading.Thread(target=self.check_login, daemon=True).start()
+    def get_product_ky(self):
+        # 檢索產品條目和尺寸下拉選單的值
+        for index, (ky_entry, size_dropdown_tuple, _) in self.product_ky.items():
+            product = ky_entry.get()
+            size = size_dropdown_tuple[0].get()
+            # 使用產品和尺寸資料
+            # 這裡可以添加您需要的邏輯來處理這些資料
+            self.show_log(f"產品:{product}，尺寸:{size}")
 
     def toggle_ui_elements(self, state=tk.DISABLED):
         """ 切換UI元件的可用性 """
-        elements = [self.acc_entry, self.sec_entry, self.fetch_button,
-                    self.productCount_dropdownMenu]
+        elements = [self.acc_entry, self.sec_entry, self.start_button, self.add_ky_button]
         for element in elements:
             element.config(state=state)
 
