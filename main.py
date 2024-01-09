@@ -9,17 +9,18 @@
 
 import os
 import tkinter as tk
-from tkinter import Entry, Label, Button, Text, Scrollbar, StringVar, OptionMenu
+from tkinter import Entry, Label, Button, StringVar, OptionMenu, Text, Scrollbar
 from selenium import webdriver
 from selenium.webdriver.edge.options import Options
-from selenium.common import TimeoutException
+from selenium.common import TimeoutException, NoSuchElementException
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support.ui import WebDriverWait, Select
 from selenium.webdriver.support import expected_conditions as EC
-import json
 import threading
 import re
 import time
+import webbrowser
+from datetime import datetime
 
 # 配置無頭模式
 edge_options = Options()
@@ -29,28 +30,44 @@ edge_options.add_argument("--disable-gpu")  # 在無頭模式下，禁用 GPU �
 # 使用Selenium開啟Edge瀏覽器
 driver = webdriver.Edge(options=edge_options)  # 確保已下載並設定好Edge WebDriver的路徑
 
+# # 使用Selenium開啟Edge瀏覽器
+# driver = webdriver.Edge()  # 請確保已下載並設定好Edge WebDriver的路徑
 
 store_url = "https://www.goopi.co/categories/goopimade-goopi-%E5%AD%A4%E5%83%BB?sort_by=created_at&order_by=desc"
+login_url = "https://www.goopi.co/users/sign_in"
 
 
 class MainApplication:  # 模組化
     def __init__(self, master):
         # 設置變數
-        self.memberLoginIdUrl = "testMemberLoginId"
+        # UI的row
         self.current_row = 1
-        # 使用字典來儲存產品條目和尺寸下拉選單
-        self.product_ky = {}  # key為索引，value為(product_entry, num_dropdown, size_dropdown)元組
-        # 初始化新增次數
+        # 初始化 新增輸入關鍵字欄位 的次數
         self.add_ky_count = 0
         self.blank_px = 18
         self.px = 5
         self.py = 2
+        # [檢查加入購物車]次數
+        self.check_add_cart_count = 0
+        # [檢查加入購物車]總次數
+        self.check_add_cart_num = 5
+        self.tip = ("使用此系統注意事項 : \n"
+                    "1.付款方式皆為預設 : 7-11取貨不付款，線上刷卡\n"
+                    "2.請先註冊會員(勿用FB連動)\n"
+                    "3.到會員資料先行綁定銀行卡與地址\n"
+                    "務必勾選[同意記住信用卡資訊及<信用卡交易協議>，以便下次快速付款]\n"
+                    "4.綁定手機碼跟地址\n"
+                    "5.確認7-11店號(6位數)\n"
+                    "6.[開始下單]前，請先點擊[登入]，並確認LOG訊息上顯示已登入\n"
+                    "7.[開始下單]前，請先確認購物車是空的，否則會一起下單或是影響下單流程唷\n"
+                    "8.登入太頻繁，會登入失敗，請等待10分鐘後再登入。")
+        self.is_login = False
 
         # 設置視窗
         self.master = master
-        self.master.title("測試登入")
+        self.master.title("Goopi自動下單")
         # 寬度和高度
-        self.master.geometry("500x350")
+        self.master.geometry("800x550")
         # 禁止水平和垂直的視窗大小調整
         self.master.resizable(False, False)
 
@@ -62,18 +79,14 @@ class MainApplication:  # 模組化
         self.master.left_frame = tk.Frame(self.master.paned_window)
         self.master.paned_window.add(self.master.left_frame)
 
-        self.n1_label = Label(self.master.left_frame, text="  ")
-        self.n1_label.grid(row=self.current_row, column=0, sticky="we", padx=self.blank_px, pady=self.py)
-        self.n2_label = Label(self.master.left_frame, text="  ")
-        self.n2_label.grid(row=self.current_row, column=1, sticky="we", padx=self.blank_px, pady=self.py)
-        self.n3_label = Label(self.master.left_frame, text="  ")
-        self.n3_label.grid(row=self.current_row, column=2, sticky="we", padx=self.blank_px, pady=self.py)
-        self.n4_label = Label(self.master.left_frame, text="  ")
-        self.n4_label.grid(row=self.current_row, column=3, sticky="we", padx=self.blank_px, pady=self.py)
-        self.n5_label = Label(self.master.left_frame, text="  ")
-        self.n5_label.grid(row=self.current_row, column=4, sticky="we", padx=self.blank_px, pady=self.py)
-        self.n6_label = Label(self.master.left_frame, text="  ")
-        self.n6_label.grid(row=self.current_row, column=5, sticky="we", padx=self.blank_px, pady=self.py)
+        # 右边的框架，用于放置操作消息文本框
+        self.master.right_frame = tk.Frame(self.master.paned_window)
+        self.master.paned_window.add(self.master.right_frame)
+
+        self.n1_label = Label(self.master.left_frame, text=self.tip)
+        self.n1_label.grid(row=self.current_row, column=0, sticky="we", padx=self.blank_px, pady=self.py, columnspan=8)
+        # self.n9_label = Label(self.master.left_frame, text="  ")
+        # self.n9_label.grid(row=self.current_row, column=8, sticky="we", padx=self.blank_px, pady=self.py)
         self.current_row += 1
 
         # 輸入帳號 Str
@@ -81,7 +94,7 @@ class MainApplication:  # 模組化
         self.acc_label.grid(row=self.current_row, column=0, sticky="w", padx=self.px, pady=self.py)
         # 輸入帳號 input
         self.acc_entry = Entry(self.master.left_frame, width=30)
-        self.acc_entry.grid(row=self.current_row, column=1, sticky="we", padx=self.px, pady=self.py, columnspan=4)
+        self.acc_entry.grid(row=self.current_row, column=1, sticky="we", padx=self.px, pady=self.py, columnspan=5)
         self.acc_entry.insert(0, "love_8462564@yahoo.com.tw")
         self.current_row += 1
 
@@ -90,119 +103,144 @@ class MainApplication:  # 模組化
         self.sec_label.grid(row=self.current_row, column=0, sticky="w", padx=self.px, pady=self.py)
         # 輸入密碼 input
         self.sec_entry = Entry(self.master.left_frame, width=30)
-        self.sec_entry.grid(row=self.current_row, column=1, sticky="we", padx=self.px, pady=self.py, columnspan=4)
+        self.sec_entry.grid(row=self.current_row, column=1, sticky="we", padx=self.px, pady=self.py, columnspan=5)
         self.sec_entry.insert(0, "mvmii1234")
         self.current_row += 1
 
-        # 新增
-        self.add_ky_button = Button(self.master.left_frame, text="新增篩選商品", command=self.add_product_ky)
-        self.add_ky_button.grid(row=self.current_row, column=0, columnspan=3, sticky="we", padx=self.px, pady=self.py)
+        # 711-店號
+        self.se_label = Label(self.master.left_frame, text="7-11 店號(6位數)，點擊我可查詢 : ", fg="blue",
+                              cursor="hand2")
+        self.se_label.grid(row=self.current_row, column=0, sticky="w", padx=self.px, pady=self.py, columnspan=6)
+        self.se_label.bind("<Button-1>", lambda e: self.open_711_link("https://emap.pcsc.com.tw/"))
+        self.current_row += 1
+        # 711-店號 input
+        self.se_entry = Entry(self.master.left_frame, width=15)
+        self.se_entry.grid(row=self.current_row, column=0, sticky="we", padx=self.px, pady=self.py, columnspan=6)
+        self.current_row += 1
+
+        # 登入
+        self.login_button = Button(self.master.left_frame, text="登入", command=self.url_login)
+        self.login_button.grid(row=self.current_row, column=0, sticky="we", padx=self.px, pady=self.py)
         # 開始
-        self.start_button = Button(self.master.left_frame, text="開始", command=self.url_start)
-        self.start_button.grid(row=self.current_row, column=3, sticky="we", padx=self.px, pady=self.py)
-        # 結束
-        self.end_button = Button(self.master.left_frame, text="結束")
-        self.end_button.grid(row=self.current_row, column=4, sticky="we", padx=self.px, pady=self.py)
+        self.start_button = Button(self.master.left_frame, text="開始下單", command=self.url_start)
+        self.start_button.grid(row=self.current_row, column=1, sticky="we", padx=self.px, pady=self.py)
         self.current_row += 1
 
         self.input_ky_label = Label(self.master.left_frame, text="輸入要買的新品關鍵字(含顏色)")
         self.input_ky_label.grid(row=self.current_row, column=0, sticky="we", padx=self.px, pady=self.py, columnspan=6)
         self.input_size_label = Label(self.master.left_frame, text="尺寸")
         self.input_size_label.grid(row=self.current_row, column=6, sticky="we", padx=self.px, pady=self.py)
-        self.input_size_label = Label(self.master.left_frame, text="數量")
-        self.input_size_label.grid(row=self.current_row, column=7, sticky="we", padx=self.px, pady=self.py)
-        self.input_delete_label = Label(self.master.left_frame, text="刪除")
-        self.input_delete_label.grid(row=self.current_row, column=8, sticky="we", padx=self.px, pady=self.py)
         self.current_row += 1
 
-    def add_product_ky(self):
-        # 限制最大添加次數為5
-        if self.add_ky_count < 5:
-            index = self.add_ky_count  # 捕獲當前索引
-            # 創建新的產品名稱輸入框
-            ky_entry = Entry(self.master.left_frame)
-            ky_entry.grid(row=self.current_row, column=0, padx=self.px, pady=self.py, columnspan=6, sticky="we")
+        # 欄位1
+        self.ky1_entry = Entry(self.master.left_frame)
+        self.ky1_entry.grid(row=self.current_row, column=0, padx=self.px, pady=self.py, columnspan=6, sticky="we")
+        self.size1_var = StringVar(self.master.left_frame)
+        self.size1_var.set("無")
+        self.size1_dropdown = OptionMenu(self.master.left_frame, self.size1_var, "1號", "2號", "3號")
+        self.size1_dropdown.grid(row=self.current_row, column=6, padx=self.px, pady=self.py, sticky="w")
+        self.current_row += 1
 
-            # 數量
-            num_var = StringVar(self.master.left_frame)
-            num_var.set("1")
-            num_dropdown = OptionMenu(self.master.left_frame, num_var, "1", "2", "3")
-            num_dropdown.grid(row=self.current_row, column=6, padx=self.px, pady=self.py, sticky="w")
+        # 欄位2
+        self.ky2_entry = Entry(self.master.left_frame)
+        self.ky2_entry.grid(row=self.current_row, column=0, padx=self.px, pady=self.py, columnspan=6, sticky="we")
+        self.size2_var = StringVar(self.master.left_frame)
+        self.size2_var.set("無")
+        self.size2_dropdown = OptionMenu(self.master.left_frame, self.size2_var, "1號", "2號", "3號")
+        self.size2_dropdown.grid(row=self.current_row, column=6, padx=self.px, pady=self.py, sticky="w")
+        self.current_row += 1
 
-            # 創建新的尺寸下拉選單
-            size_var = StringVar(self.master.left_frame)
-            size_var.set("無")
-            size_dropdown = OptionMenu(self.master.left_frame, size_var, "M", "L", "XL", "XS", "S")
-            size_dropdown.grid(row=self.current_row, column=7, padx=self.px, pady=self.py, sticky="w")
+        # 欄位3
+        self.ky3_entry = Entry(self.master.left_frame)
+        self.ky3_entry.grid(row=self.current_row, column=0, padx=self.px, pady=self.py, columnspan=6, sticky="we")
+        self.size3_var = StringVar(self.master.left_frame)
+        self.size3_var.set("無")
+        self.size3_dropdown = OptionMenu(self.master.left_frame, self.size3_var, "1號", "2號", "3號")
+        self.size3_dropdown.grid(row=self.current_row, column=6, padx=self.px, pady=self.py, sticky="w")
+        self.current_row += 1
 
-            delete_button = Button(self.master.left_frame, text="刪除",
-                                   command=lambda: self.delete_ky_button(index))
-            delete_button.grid(row=self.current_row, column=8, sticky="we", padx=self.px, pady=self.py)
+        # 欄位4
+        self.ky4_entry = Entry(self.master.left_frame)
+        self.ky4_entry.grid(row=self.current_row, column=0, padx=self.px, pady=self.py, columnspan=6, sticky="we")
+        self.size4_var = StringVar(self.master.left_frame)
+        self.size4_var.set("無")
+        self.size4_dropdown = OptionMenu(self.master.left_frame, self.size4_var, "1號", "2號", "3號")
+        self.size4_dropdown.grid(row=self.current_row, column=6, padx=self.px, pady=self.py, sticky="w")
+        self.current_row += 1
 
-            # 使用索引作為字典鍵
-            self.product_ky[index] = (ky_entry, (num_var, num_dropdown), (size_var, size_dropdown), delete_button)
-            # 更新新增次數
-            self.add_ky_count += 1
-            self.current_row += 1  # 確保每次新增元素都在新的行
-        else:
-            self.add_ky_button.config(text='無法新增，我就爛')
-            self.add_ky_button.config(state='disabled')
+        # 欄位5
+        self.ky5_entry = Entry(self.master.left_frame)
+        self.ky5_entry.grid(row=self.current_row, column=0, padx=self.px, pady=self.py, columnspan=6, sticky="we")
+        self.size5_var = StringVar(self.master.left_frame)
+        self.size5_var.set("無")
+        self.size5_dropdown = OptionMenu(self.master.left_frame, self.size5_var, "1號", "2號", "3號")
+        self.size5_dropdown.grid(row=self.current_row, column=6, padx=self.px, pady=self.py, sticky="w")
+        self.current_row += 1
 
-    def delete_ky_button(self, index):
-        # 刪除特定索引的元素
-        ky_entry, num_dropdown_tuple, size_dropdown_tuple, delete_btn = self.product_ky[index]
-        ky_entry.destroy()
-        num_dropdown_tuple[1].destroy()
-        size_dropdown_tuple[1].destroy()
-        delete_btn.destroy()
-        del self.product_ky[index]
+        # scrollbar
+        self.scrollbar = Scrollbar(self.master.right_frame)
+        self.scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
-        # 重新安排剩餘元素的索引
-        old_keys = sorted(self.product_ky.keys())
-        for old_index in old_keys:
-            if old_index > index:
-                new_index = old_index - 1
-                self.product_ky[new_index] = self.product_ky.pop(old_index)
-                # 更新刪除按鈕的命令以反映新索引，将索引作为默认参数传递给 lambda 函数
-                _, _, _, delete_btn = self.product_ky[new_index]
-                delete_btn.config(command=lambda idx=new_index: self.delete_ky_button(idx))
+        # Text
+        self.msg_text = Text(self.master.right_frame, yscrollcommand=self.scrollbar.set)
+        self.msg_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        self.msg_text.config(state=tk.DISABLED)  # 默认不可编辑
+        self.scrollbar.config(command=self.msg_text.yview)
 
-        # 更新 add_ky_count 的值
-        self.add_ky_count -= 1
-
-        # 檢查條件並更新 add_ky_button 的狀態
-        if self.add_ky_count < 5 and self.add_ky_button['state'] == 'disabled':
-            self.add_ky_button.config(text='新增篩選商品')
-            self.add_ky_button.config(state='normal')
-
-    def url_start(self):
-        """
-        開始流程流程 :
-        檢查登入狀態 => 登入
-        -- 跳轉連結[https://www.goopi.co/categories/goopimade-goopi-%E5%AD%A4%E5%83%BB?sort_by=created_at&order_by=desc]
-           -- 檢查是否有新品
-              -- 有新品 : 加入購物車
-                 -- 訂單結帳
-              -- 無新品 : 跳提示語[暫無新品]
-        :return:
-        """
-        self.toggle_ui_elements()
-        # 在另一個線程中啟動長時間運行的操作，因為要確保show_log能及時在result_text中顯示，帥呆了 ><
-        threading.Thread(target=self.check_login, daemon=True).start()
-    def get_product_ky(self):
-        # 檢索產品條目和尺寸下拉選單的值
-        for index, (ky_entry, size_dropdown_tuple, _) in self.product_ky.items():
-            product = ky_entry.get()
-            size = size_dropdown_tuple[0].get()
-            # 使用產品和尺寸資料
-            # 這裡可以添加您需要的邏輯來處理這些資料
-            self.show_log(f"產品:{product}，尺寸:{size}")
+    @staticmethod
+    def open_711_link(url):
+        webbrowser.open_new(url)
 
     def toggle_ui_elements(self, state=tk.DISABLED):
         """ 切換UI元件的可用性 """
-        elements = [self.acc_entry, self.sec_entry, self.start_button, self.add_ky_button]
+        elements = [self.acc_entry, self.sec_entry, self.se_entry, self.start_button, self.login_button,
+                    self.ky1_entry, self.ky2_entry, self.ky3_entry, self.ky4_entry, self.ky5_entry,
+                    self.size1_dropdown, self.size2_dropdown, self.size3_dropdown,
+                    self.size4_dropdown, self.size5_dropdown]
         for element in elements:
             element.config(state=state)
+
+    def check_input(self, is_start=True):
+        if not self.acc_entry.get().strip():
+            self.show_log("請輸入帳號")
+            return False
+        if not self.sec_entry.get().strip():
+            self.show_log("請輸入密碼")
+            return False
+        if is_start:
+            se_entry_value = self.se_entry.get().strip()
+            if not se_entry_value:
+                self.show_log("請輸入7-11店號")
+                return False
+            elif not se_entry_value.isdigit() or len(se_entry_value) != 6:
+                self.show_log("店號必須是6位數字")
+                return False
+            buy_list = self.get_product_ky()
+            if not buy_list:  # 列表是空的
+                self.url_end("請輸入要買的產品關鍵字")
+                return False
+        return True  # 檢查輸入欄位皆有輸入
+
+    def url_start(self):
+        if self.check_input():
+            self.toggle_ui_elements()
+            # 在另一個線程中啟動長時間運行的操作，因為要確保show_log能及時在result_text中顯示，帥呆了 ><
+            threading.Thread(target=self.thread_task_buy_start, daemon=True).start()
+
+    def thread_task_buy_start(self):
+        if self.is_login:
+            self.add_product_to_shopping_cart()
+        else:
+            self.is_login = False
+            check_is_login = self.check_login()
+            if check_is_login:
+                self.is_login = True
+                self.add_product_to_shopping_cart()
+            elif check_is_login is False:
+                if self.login():
+                    self.is_login = True
+                    self.show_log("[登入]成功")
+                    self.add_product_to_shopping_cart()
 
     def check_login(self):
         self.show_log("檢查登入狀態中...")
@@ -218,166 +256,373 @@ class MainApplication:  # 模組化
             href_value = None
             for item in a_list:
                 href_value = item.get_attribute('href')
-                self.show_log(f"href_value : {href_value}")
+                self.show_log(f"href_value : {href_value}", False)
                 if href_value is not None:
                     if "/users/sign_in" in href_value:
                         # 未登入，執行登入操作
                         self.show_log("未登入，轉向登入頁面並登入中...")
-                        driver.get(href_value)
-                        self.login()
-                        # self.show_log("暫時假裝登入成功!!")
-                        # self.fetch_product_ids()
-                        break  # 中斷迴圈
+                        return False
                     else:
                         # 已登入
                         # 使用正则表达式提取编码
                         match = re.search(r'/users/(\w+)/edit', href_value)
                         if match:
                             code = match.group(1)
-                            self.show_log(f"已登入。會員編號Url : {code}。\n導頁至GOOPI-GOOPIMADE頁面中...")
-                            break  # 中斷迴圈
+                            self.show_log(f"已登入。會員編號Url : {code}。")
+                            return True
                         else:
                             href_value = None
             if href_value is None:
-                self.show_log("無法獲取登入按鈕標籤，請求大美女工程師協助。")
+                self.url_end("無法獲取登入按鈕標籤，請求大美女工程師協助。")
+                return None
         except TimeoutException:
-            self.show_log("操作超時，無法[檢查登入]狀態。")
+            self.url_end("操作超時，無法[檢查登入]狀態。")
+            return None
         except Exception as e:
-            self.show_log(f"無法確定[檢查登入]狀態：{e}")
+            self.url_end(f"無法確定[檢查登入]狀態：{e}")
+            return None
 
-    def check_buy_product(self):
+    def get_product_ky(self):
+        # 初始化购买列表
+        buy_list = []
+
+        # 组合条目和尺寸变量
+        entries_and_sizes = [
+            (self.ky1_entry, self.size1_var),
+            (self.ky2_entry, self.size2_var),
+            (self.ky3_entry, self.size3_var),
+            (self.ky4_entry, self.size4_var),
+            (self.ky5_entry, self.size5_var)
+        ]
+
+        # 遍历组合，构建购买列表
+        for entry, size_var in entries_and_sizes:
+            ky = self.remove_spaces(entry.get())
+            if ky.strip():  # 檢查是否前後都空白
+                buy_list.append({"pName": ky.strip(), "size": size_var.get()})
+
+        self.show_log(f"buy_list:{len(buy_list)}",False)
+        # 返回购买列表
+        return buy_list
+
+    def remove_spaces(self, string):
+        # 轉小寫 + 去除空白空格
+        return ''.join(string.lower().split())
+
+    def find_product_by_keyword(self, keyword, buy_list):
+        # 将关键词格式化为小写以实现大小写不敏感的搜索
+        for item in buy_list:
+            self.show_log(f"item name: {item['pName']}", False)
+            # 检查商品名称是否包含关键词
+            if item["pName"] in keyword:
+                return item
+        # 如果没有找到匹配的商品，则返回None或相应的消息
+        return None
+
+    def add_product_to_shopping_cart(self):
+        is_sold_out = None
         try:
             # 加載URL (因登入成公會導頁到首頁，所以這邊還是需要將頁面導到goopi中)
             driver.get(store_url)
             wait = WebDriverWait(driver, 10)
 
-            # 先取前10個 product-item 元素
-            product_items = wait.until(
+            # 確認要買的商品
+            # buy_list = [{"pName": "“RE-C01” Ryoiki Exp. Oversized Crewneck - D-Gray", "num": "5", "size": "3號"},
+            #             {"pName": "“MB-7” SOFTBOX Patchwork Beanie - Shadow", "num": "1", "size": "無"}]
+            buy_list = self.get_product_ky()
+
+            # 取前10個 product 元素
+            product_list = wait.until(
                 EC.presence_of_all_elements_located((By.CLASS_NAME, 'productList__product'))
             )[:10]
 
-            # 使用字典來快速檢查購買清單中的產品名稱
-            buy_product_names = {item["pName"]: item for item in buy_product}
-
+            # 添加到購物車的數量
             add_car_count = 0
-            for item in product_items:
+            # 符合產品名比對成功次數，因商品可能售完無法加入購物車，只要比對成功，就算是商品已上架在官網
+            matched_count = 0
+            for item in product_list:
                 product_id = item.get_attribute('product-id')
                 product_name_element = item.find_element(By.CSS_SELECTOR, ".title.text-primary-color")
                 product_name = product_name_element.text if product_name_element else "未知產品名稱"
-                product_url = item.find_element(By.TAG_NAME, 'a').get_attribute('href')
                 product_status_elements = item.find_elements(By.CSS_SELECTOR, ".sold-out-item")
-                product_status = 1 if product_status_elements else 0  # 如果列表不為空，則產品售罄
-                # current_product_items.append({
-                #     "index": index,
-                #     "pId": product_id,
-                #     "pName": product_name,
-                #     "pUrl": product_url,
-                #     "pStatus": product_status
-                # })
+                product_status = 1 if product_status_elements else 0  # 1:已售完，0:還有庫存
 
-                # 新增代碼來提取a標籤的href屬性
-                anchor_element = item.find_element(By.TAG_NAME, 'a')
-                href_link = anchor_element.get_attribute('href') if anchor_element else None
-
-                self.show_log(f"product_id: {product_id} href_link: {href_link}")
-                if (product_name in buy_product_names or any(
-                        pName in product_name for pName in buy_product_names)) and href_link is not None:
-                    add_car_count += 1
-                    self.show_log(f"添加到購物車 product_name :{product_name}，addCarCount:{add_car_count}")
-                    add_car = item.find_element(By.CSS_SELECTOR,
-                                                ".btn-add-to-cart.js-btn-add-to-cart.mobile-cart.visible-xs.visible-sm")
-                    add_car.click()
-                    info_dialog = WebDriverWait(driver, 10).until(
-                        EC.visibility_of_element_located((By.CSS_SELECTOR, 'div[uib-modal-window="modal-window"]'))
-                    )
-                    add_to_cart_button = info_dialog.find_element(By.ID, "btn-add-to-cart")
-                    add_to_cart_button.click()
-
-                    if add_car_count is len(buy_product):
-                        car_dialog = WebDriverWait(driver, 10).until(
-                            EC.visibility_of_element_located((By.ID, 'cart-panel'))
-                        )
-                        checkout_button = car_dialog.find_element(By.ID, "btn-checkout")
-                        checkout_button.click()
-                        # 需要檢查是否為登入狀態
+                product_name = self.remove_spaces(product_name)
+                self.show_log(f"product_id: {product_id}，product_name:{product_name}", False)
+                matched_product = self.find_product_by_keyword(product_name, buy_list)
+                # 检查是否找到匹配项
+                if matched_product:
+                    matched_count += 1
+                    if product_status == 1:
+                        self.show_log(f"{product_name} 該商品已售完")
                     else:
-                        # 更改彈窗的style屬性以防止其自動關閉
-                        driver.execute_script("document.getElementById('cart-panel').style.display='block';")
-                        time.sleep(2)  # 該死的關閉視窗有動畫，所以這邊要睡2秒確保它的動畫關閉
+                        self.show_log(f"添加 {product_name} 到購物車中...")
+                        add_car = item.find_element(
+                            By.CSS_SELECTOR,
+                            ".btn-add-to-cart.js-btn-add-to-cart.mobile-cart.visible-xs.visible-sm")
+                        add_car.click()
 
-                    # # 使用 JavaScript 在新分頁中打開按鈕的鏈接
-                    # driver.execute_script(f"window.open('{href_link}', '_blank');")
-                    # tabs_handles.append(driver.window_handles[-1])  # 保存新分頁的句柄
+                        # 選擇尺寸跟數量的視窗，這邊只邊擊尺寸
+                        info_dialog = wait.until(
+                            EC.visibility_of_element_located((By.CSS_SELECTOR, 'div[uib-modal-window="modal-window"]'))
+                        )
 
-                    self.show_log(f"添加到購物車 成功!!")
+                        size = matched_product.get('size')
+                        self.show_log(f"size:{size}", False)
+                        if size != "無":
+                            select_element = wait.until(EC.element_to_be_clickable((By.CLASS_NAME, "selectpicker")))
+                            if select_element:
+                                # 创建 Select 对象
+                                select = Select(select_element)
+                                # 选择 尺寸號碼
+                                select.select_by_value(f"string:{size}")
+                                # 檢查尺寸是否售完
+                                is_sold_out = wait.until(
+                                    EC.visibility_of_element_located((By.CSS_SELECTOR, ".wrap-sold-out:not(.ng-hide)")))
+                            else:
+                                # 有可能是帽子無尺寸，但使用者選擇尺寸了
+                                self.show_log(f"找不到符合{size}尺寸的商品，這邊接續訂購流程...")
+                        if is_sold_out:
+                            self.url_end("尺寸已售完")
+                        else:
+                            add_to_cart_button = info_dialog.find_element(By.ID, "btn-add-to-cart")
+                            add_to_cart_button.click()
+
+                            driver.execute_script("document.getElementById('cart-panel').style.display='block';")
+                            # 該死的關閉視窗有動畫，所以這邊要睡2秒確保它的動畫關閉
+                            time.sleep(1)
+                            self.show_log("添加到購物車 成功!!")
+                            add_car_count += 1
+                # for迴圈結束
+            if matched_count == 0:
+                # 待調整 : 迴圈部分
+                self.show_log("無商品添加至購物車，繼續檢查中...")
+                if self.check_add_cart_count is self.check_add_cart_num:
+                    self.url_end("查無商品加入購物車，流程結束。")
+                    self.check_add_cart_count = 0
+                    return
+                self.check_add_cart_count += 1
+                self.add_product_to_shopping_cart()
+            else:
+                self.show_log(f"共添加 {add_car_count} 筆商品進購物車")
+                driver.execute_script("document.getElementById('cart-panel').style.display='block';")
+                car_dialog = WebDriverWait(driver, 10).until(
+                    EC.visibility_of_element_located((By.ID, 'cart-panel'))
+                )
+                car_checkout_button = car_dialog.find_element(By.ID, "btn-checkout")
+                car_checkout_button.click()
+                # 待調整 : 需要檢查是否為登入狀態
+                # 進入訂購畫面
+                self.checkout_products()
+        except TimeoutException:
+            self.url_end("操作超時，無法[加入購物車]狀態。")
+        except Exception as e:
+            self.show_log(f"無法確定[訂購流程]狀態：{e}", False)
+            self.url_end("無法確定[加入購物車]狀態，麻煩檢查商品下單數量是否超過")
+
+    def checkout_products(self):
+        self.show_log("[訂購流程]確認中...")
+        try:
+            wait = WebDriverWait(driver, 10)
+
+            # 前往填寫資料頁面
+            checkout_button = wait.until(
+                EC.element_to_be_clickable((By.CSS_SELECTOR, '.btn.btn-success.btn-block.btn-checkout'))
+            )
+            checkout_button.click()
+
+            # 選擇門市
+            search_store_button = WebDriverWait(driver, 10).until(
+                EC.element_to_be_clickable((By.CSS_SELECTOR, ".btn-pick-store"))
+            )
+            search_store_button.click()
+
+            if self.search_711_store():
+                self.show_log("選擇711門市已完成")
+                # 勾選同意書
+                if self.check_the_consent_form():
+                    self.show_log("同意書點擊正確")
+                    # # 點擊[提交訂單]按鈕
+                    # place_order_button = WebDriverWait(driver, 10).until(
+                    #     EC.element_to_be_clickable((By.ID, "place-order-recaptcha"))
+                    # )
+                    # place_order_button.click()
+                else:
+                    self.url_end("同意書點擊異常，停止下單。")
+                    return
+            else:
+                self.url_end("選擇711門市異常，停止下單。")
 
         except TimeoutException:
-            self.show_log("操作超時，無法[加入購物車]狀態。")
+            self.url_end("操作超時，無法取得[訂購流程]狀態。")
         except Exception as e:
-            self.show_log(f"無法確定[加入購物車]狀態：{e}")
+            self.show_log(f"無法確定[訂購流程]狀態：{e}", False)
+            self.url_end("無法確定[訂購流程]狀態，麻煩檢查購物車商品下單數量是否超過")
 
-    def get_product_ky(self):
-        # 檢索產品條目和尺寸下拉選單的值
-        for index, (ky_entry, size_dropdown_tuple, _) in self.product_ky.items():
-            product = ky_entry.get()
-            size = size_dropdown_tuple[0].get()
-            # 使用產品和尺寸資料
-            # 這裡可以添加您需要的邏輯來處理這些資料
-            self.show_log(f"產品:{product}，尺寸:{size}")
+    def search_711_store(self):
+        try:
+            # 點擊 '門市店號'
+            by_id_button = WebDriverWait(driver, 10).until(
+                EC.element_to_be_clickable((By.ID, "byID"))
+            )
+            by_id_button.click()
+
+            driver.switch_to.frame("frmMain")
+
+            store_number = self.se_entry.get()
+            # 輸入門市號碼
+            store_id_input = WebDriverWait(driver, 10).until(
+                EC.element_to_be_clickable((By.ID, "storeIDKey"))
+            )
+            store_id_input.send_keys(store_number)  # 239444
+
+            # 點擊 '搜尋'
+            search_button = driver.find_element(By.ID, "send")
+            search_button.click()
+
+            # 選擇門市
+            select_store = WebDriverWait(driver, 10).until(
+                EC.element_to_be_clickable((By.XPATH, f"//li[contains(@onclick, 'showMap({store_number})')]"))
+            )
+            select_store.click()
+
+            driver.switch_to.default_content()
+            # 確認門市
+            confirm_button = driver.find_element(By.ID, "sevenDataBtn")
+            confirm_button.click()
+
+            # 同意選擇門市
+            accept_button = driver.find_element(By.ID, "AcceptBtn")
+            accept_button.click()
+
+            # 確認提交
+            submit_button = driver.find_element(By.ID, "submit_butn")
+            submit_button.click()
+
+            return True
+        except TimeoutException:
+            self.show_log("操作超時，無法取得[搜尋門市]狀態。")
+            return False
+        except Exception as e:
+            self.show_log(f"無法確定[搜尋門市]狀態：{e}")
+            return False
+
+    def check_the_consent_form(self):
+        try:
+            label_list = WebDriverWait(driver, 10).until(
+                EC.presence_of_all_elements_located((By.CSS_SELECTOR, '.control-label'))
+            )
+            consent_count = 0
+            for label in label_list:
+                try:
+                    consent_form = label.find_element(By.NAME, 'policy')
+                    driver.execute_script("arguments[0].click();", consent_form)
+                    consent_count += 1
+                except NoSuchElementException:
+                    pass
+                except Exception as e:
+                    self.show_log(f"Error clicking on consent form: {e}")
+
+                try:
+                    recipient_info = label.find_element(
+                        By.CSS_SELECTOR,
+                        'input[type="checkbox"][data-e2e-id="order-delivery-recipient-is-customer_checkbox"]')
+                    if recipient_info:
+                        label.click()
+                        consent_count += 1
+                except NoSuchElementException:
+                    # 處理元素未找到的情況
+                    pass
+            return consent_count == 2
+        except TimeoutException:
+            self.show_log("操作超時，無法取得[勾選同意書]狀態。")
+            return False
+        except Exception as e:
+            self.show_log(f"無法確定[勾選同意書]狀態：{e}")
+            return False
+
+    def url_login(self):
+        if self.check_input(False):
+            self.toggle_ui_elements()
+            # 在另一個線程中啟動長時間運行的操作，因為要確保show_log能及時在result_text中顯示，帥呆了 ><
+            threading.Thread(target=self.thread_task_buy_login, daemon=True).start()
+
+    def thread_task_buy_login(self):
+        check_is_login = self.check_login()
+        if check_is_login is False:
+            if self.login():
+                self.is_login = True
+                self.url_end("[登入]成功!")
+        else:
+            self.url_end("-------------")
 
     def login(self):
+        driver.get(login_url)
         acc = self.acc_entry.get()
         sec = self.sec_entry.get()
         try:
             wait = WebDriverWait(driver, 10)
-            # 帳號輸入
-            wait.until(
+
+            # 找到帳號輸入框並輸入帳號
+            acc_input = wait.until(
                 EC.visibility_of_element_located((By.NAME, 'mobile_phone_or_email'))
             )
-            # 找到帳號輸入框並輸入帳號
-            acc_input = driver.find_element(By.NAME, 'mobile_phone_or_email')
             acc_input.clear()
             acc_input.send_keys(acc)
 
-            # 密码输入
-            wait.until(
+            # 找到密码输入框并输入密码
+            sec_input = wait.until(
                 EC.visibility_of_element_located((By.CSS_SELECTOR, "input[data-e2e-id='login-password_input']"))
             )
-            # 找到密码输入框并输入密码
-            sec_input = driver.find_element(By.CSS_SELECTOR, "input[data-e2e-id='login-password_input']")
             sec_input.clear()
             sec_input.send_keys(sec)
 
-            # 登入
-            wait.until(
+            # 找到登入按鈕並點擊
+            login_button = wait.until(
                 EC.visibility_of_element_located((By.CSS_SELECTOR, "button[data-e2e-id='login-submit_button']"))
             )
-            # 找到登入按鈕並點擊
-            login_button = driver.find_element(By.CSS_SELECTOR, "button[data-e2e-id='login-submit_button']")
             login_button.click()
 
-            # 使用 WebDriverWait 等待錯誤訊息元素出現，最多等待10秒
+            return self.login_is_success()
+        except TimeoutException:
+            self.url_end("[登入]失敗 : 操作超時，元素無法交互")
+        except Exception as e:
+            self.url_end(f"[登入]失敗 : 無法獲取亂碼：{e}")
+
+    def login_is_success(self):
+        try:
             error_message_element = WebDriverWait(driver, 10).until(
                 EC.visibility_of_element_located((By.CSS_SELECTOR, '.alert.alert-danger:not(.ng-hide) .ng-binding'))
             )
-
-            # 檢查錯誤訊息內容
-            error_message = error_message_element.text.strip()
-
-            if error_message:
-                self.show_log(f"登入失敗 :{error_message}")
-                self.master.after(0, self.toggle_ui_elements, tk.NORMAL)
+            if error_message_element:
+                error_message = error_message_element.text.strip()
+                self.url_end(f"登入失敗 :{error_message}")
+                return False
             else:
-                self.show_log("[登入]成功!")
-                self.check_buy_product()
+                return True
         except TimeoutException:
-            self.show_log("[登入]失敗 : 操作超時，元素無法交互")
+            return True
         except Exception as e:
-            self.show_log(f"[登入]失敗 : 無法獲取亂碼：{e}")
+            self.url_end(f"[登入]失敗 : 無法獲取亂碼：{e}")
+            return False
 
-    @staticmethod
-    def show_log(msg):
-        print(msg)
+    def show_log(self, msg, is_show=True):
+        if is_show:
+            self.msg_text.config(state=tk.NORMAL)
+            # 在Text控件的末尾追加日志
+            self.msg_text.insert(tk.END, msg + "\n")
+            # 滚动到Text控件的末尾
+            self.msg_text.see(tk.END)
+            self.msg_text.config(state=tk.DISABLED)
+        # 获取当前时间并格式化为字符串
+        timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
+        # 将时间戳添加到消息前面
+        formatted_message = f"[{timestamp}] {msg}"
+        print(formatted_message)
+
+    def url_end(self, msg):
+        self.show_log(msg)
+        self.master.after(0, self.toggle_ui_elements, tk.NORMAL)
 
     # def fetch_product_ids(self):
     #     file_path = 'info.json'
@@ -454,6 +699,59 @@ class MainApplication:  # 模組化
     #     with open(file_path, 'w') as file:
     #         json.dump(info, file, indent=4)
     #     self.show_log(f"存檔成功，商品數量：{len(info['oldProductItems'])}")
+
+    # def add_product_ky(self):
+    #     # 限制最大添加次數為5
+    #     if self.add_ky_count < 5:
+    #         index = self.add_ky_count  # 捕獲當前索引
+    #         # 創建新的產品名稱輸入框
+    #         ky_entry = Entry(self.master.left_frame)
+    #         ky_entry.grid(row=self.current_row, column=0, padx=self.px, pady=self.py, columnspan=6, sticky="we")
+    #
+    #         # 創建新的尺寸下拉選單
+    #         size_var = StringVar(self.master.left_frame)
+    #         size_var.set("無")
+    #         size_dropdown = OptionMenu(self.master.left_frame, size_var, "1號", "2號", "3號")
+    #         size_dropdown.grid(row=self.current_row, column=6, padx=self.px, pady=self.py, sticky="w")
+    #
+    #         delete_button = Button(self.master.left_frame, text="刪除",
+    #                                command=lambda: self.delete_ky_button(index))
+    #         delete_button.grid(row=self.current_row, column=7, sticky="we", padx=self.px, pady=self.py)
+    #
+    #         # 使用索引作為字典鍵
+    #         self.product_ky[index] = (ky_entry, (size_var, size_dropdown), delete_button)
+    #         # 更新新增次數
+    #         self.add_ky_count += 1
+    #         self.current_row += 1  # 確保每次新增元素都在新的行
+    #     else:
+    #         self.add_ky_button.config(text='無法新增，我就爛')
+    #         self.add_ky_button.config(state='disabled')
+
+    # def delete_ky_button(self, index):
+    #     # 刪除特定索引的元素
+    #     ky_entry, size_dropdown_tuple, delete_btn = self.product_ky[index]
+    #     ky_entry.destroy()
+    #     size_dropdown_tuple[1].destroy()
+    #     delete_btn.destroy()
+    #     del self.product_ky[index]
+    #
+    #     # 重新安排剩餘元素的索引
+    #     old_keys = sorted(self.product_ky.keys())
+    #     for old_index in old_keys:
+    #         if old_index > index:
+    #             new_index = old_index - 1
+    #             self.product_ky[new_index] = self.product_ky.pop(old_index)
+    #             # 更新刪除按鈕的命令以反映新索引，将索引作为默认参数传递给 lambda 函数
+    #             _, _, delete_btn = self.product_ky[new_index]
+    #             delete_btn.config(command=lambda idx=new_index: self.delete_ky_button(idx))
+    #
+    #     # 更新 add_ky_count 的值
+    #     self.add_ky_count -= 1
+    #
+    #     # 檢查條件並更新 add_ky_button 的狀態
+    #     if self.add_ky_count < 5 and self.add_ky_button['state'] == 'disabled':
+    #         self.add_ky_button.config(text='新增篩選商品')
+    #         self.add_ky_button.config(state='normal')
 
 
 if __name__ == "__main__":
