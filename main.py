@@ -96,7 +96,7 @@ class MainApplication:  # 模組化
         self.sec_label = Label(self.master.left_frame, text="密碼：")
         self.sec_label.grid(row=self.current_row, column=0, sticky="w", padx=self.px, pady=self.py)
         # 輸入密碼 input
-        self.sec_entry = Entry(self.master.left_frame, width=30)
+        self.sec_entry = Entry(self.master.left_frame, width=30, show="*")
         self.sec_entry.grid(row=self.current_row, column=1, sticky="we", padx=self.px, pady=self.py, columnspan=5)
         self.sec_entry.insert(0, "mvmii1234")
         self.current_row += 1
@@ -126,7 +126,8 @@ class MainApplication:  # 模組化
         self.check_add_cart_count_entry.insert(0, "100")
         # 檢查購物車迴圈次數 Str
         self.check_add_cart_count_tip_label = Label(self.master.left_frame, text="(輸入數字且最多三位數)")
-        self.check_add_cart_count_tip_label.grid(row=self.current_row, column=4, sticky="w", padx=self.px, pady=self.py)
+        self.check_add_cart_count_tip_label.grid(row=self.current_row, column=4, sticky="w", padx=self.px, pady=self.py,
+                                                 columnspan=2)
         self.current_row += 1
 
         # 是否開啟瀏覽器
@@ -233,6 +234,7 @@ class MainApplication:  # 模組化
         new_open_browser_status = self.open_browser_mode.get()
         if self.open_browser_status == new_open_browser_status:
             return
+        self.is_login = False
         self.open_browser_status = new_open_browser_status
         self.driver.quit()
         if self.open_browser_mode.get():
@@ -243,6 +245,7 @@ class MainApplication:  # 模組化
             edge_options = Options()
             edge_options.add_argument("--headless")  # 啟用無頭模式
             edge_options.add_argument("--disable-gpu")  # 在無頭模式下，禁用 GPU 加速有時是必要的
+            edge_options.add_argument("window-size=1920,1080")  # 设置窗口大小
             # 使用Selenium開啟Edge瀏覽器
             self.driver = webdriver.Edge(options=edge_options)  # 確保已下載並設定好Edge WebDriver的路徑
 
@@ -323,7 +326,6 @@ class MainApplication:  # 模組化
             self.url_end("無法確定[清除購物車]狀態。")
 
     def url_start(self):
-        self.clear_message()
         if self.check_input():
             self.toggle_open_browser_mode()  # 切換是否開啟瀏覽器狀態
             self.toggle_ui_elements()
@@ -539,10 +541,10 @@ class MainApplication:  # 模組化
                             elif not pr_is_over:
                                 # 關閉購物車清單視窗
                                 modal_mask = WebDriverWait(self.driver, 10).until(
-                                    EC.element_to_be_clickable((By.CSS_SELECTOR, ".Modal-mask.cart-mask.js-modal-mask"))
+                                    EC.presence_of_element_located(
+                                        (By.CSS_SELECTOR, ".Modal-mask.cart-mask.js-modal-mask"))
                                 )
-                                # 点击该元素
-                                modal_mask.click()
+                                self.driver.execute_script("arguments[0].click();", modal_mask)
                                 self.show_log("添加成功!")
                                 add_cart_count += 1
                             else:
@@ -619,7 +621,7 @@ class MainApplication:  # 模組化
             self.url_end("操作超時，無法取得[訂購流程]狀態。")
         except Exception as e:
             self.show_log(f"無法確定[訂購流程]狀態：{e}", False)
-            self.url_end("無法確定[訂購流程]狀態，麻煩檢查購物車商品下單數量是否超過")
+            self.url_end("無法確定[訂購流程]狀態，麻煩檢查商品下單數量是否超過以及再次確認是否為登入中")
 
     def search_711_store(self):
         try:
@@ -711,6 +713,7 @@ class MainApplication:  # 模組化
             threading.Thread(target=self.thread_task_by_login, daemon=True).start()
 
     def thread_task_by_login(self):
+        self.is_login = False
         check_is_login = self.check_login()
         if check_is_login is False:
             if self.login():
@@ -785,12 +788,14 @@ class MainApplication:  # 模組化
 
     def url_end(self, msg):
         self.show_log(msg)
+        self.show_log("-----------------------------")
         self.master.after(0, self.toggle_ui_elements, tk.NORMAL)
 
     def clear_message(self):
         self.msg_text.config(state=tk.NORMAL)
         self.msg_text.delete("1.0", tk.END)
         self.msg_text.config(state=tk.DISABLED)
+
     # def fetch_product_ids(self):
     #     file_path = 'info.json'
     #     new_product_items = []
