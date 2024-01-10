@@ -22,17 +22,6 @@ import time
 import webbrowser
 from datetime import datetime
 
-# 配置無頭模式
-edge_options = Options()
-edge_options.add_argument("--headless")  # 啟用無頭模式
-edge_options.add_argument("--disable-gpu")  # 在無頭模式下，禁用 GPU 加速有時是必要的
-
-# 使用Selenium開啟Edge瀏覽器
-driver = webdriver.Edge(options=edge_options)  # 確保已下載並設定好Edge WebDriver的路徑
-
-# # 使用Selenium開啟Edge瀏覽器
-# driver = webdriver.Edge()  # 請確保已下載並設定好Edge WebDriver的路徑
-
 store_url = "https://www.goopi.co/categories/goopimade-goopi-%E5%AD%A4%E5%83%BB?sort_by=created_at&order_by=desc"
 login_url = "https://www.goopi.co/users/sign_in"
 
@@ -62,6 +51,13 @@ class MainApplication:  # 模組化
                     "7.[開始下單]前，請先確認購物車是空的，否則會一起下單或是影響下單流程唷\n"
                     "8.登入太頻繁，會登入失敗，請等待10分鐘後再登入。")
         self.is_login = False
+        self.open_browser_mode = tk.BooleanVar(value=False)  # 默认为非无头模式
+        self.open_browser_status = False
+        # 配置無頭模式
+        edge_options = Options()
+        edge_options.add_argument("--headless")  # 啟用無頭模式
+        edge_options.add_argument("--disable-gpu")  # 在無頭模式下，禁用 GPU 加速有時是必要的
+        self.driver = webdriver.Edge(options=edge_options)
 
         # 設置視窗
         self.master = master
@@ -118,12 +114,23 @@ class MainApplication:  # 模組化
         self.se_entry.grid(row=self.current_row, column=0, sticky="we", padx=self.px, pady=self.py, columnspan=6)
         self.current_row += 1
 
+        # 是否開啟瀏覽器
+        self.open_browser_checkbutton = tk.Checkbutton(self.master.left_frame, text="開啟Edge瀏覽器",
+                                                       variable=self.open_browser_mode)
+        self.open_browser_checkbutton.grid(row=self.current_row, column=0, sticky="w", padx=self.px, pady=self.py,
+                                           columnspan=3)
+        self.current_row += 1
+
         # 登入
         self.login_button = Button(self.master.left_frame, text="登入", command=self.url_login)
         self.login_button.grid(row=self.current_row, column=0, sticky="we", padx=self.px, pady=self.py)
-        # 開始
+        # 開始下單
         self.start_button = Button(self.master.left_frame, text="開始下單", command=self.url_start)
-        self.start_button.grid(row=self.current_row, column=1, sticky="we", padx=self.px, pady=self.py)
+        self.start_button.grid(row=self.current_row, column=4, sticky="we", padx=self.px, pady=self.py)
+        # 清除右邊訊息
+        self.clear_msg_button = Button(self.master.left_frame, text="清空右邊訊息", command=self.clear_message)
+        self.clear_msg_button.grid(row=self.current_row, column=5, sticky="we", padx=self.px, pady=self.py,
+                                   columnspan=2)
         self.current_row += 1
 
         self.input_ky_label = Label(self.master.left_frame, text="輸入要買的新品關鍵字(含顏色)")
@@ -187,13 +194,32 @@ class MainApplication:  # 模組化
         self.msg_text.config(state=tk.DISABLED)  # 默认不可编辑
         self.scrollbar.config(command=self.msg_text.yview)
 
+    def toggle_open_browser_mode(self):
+        new_open_browser_status = self.open_browser_mode.get()
+        if self.open_browser_status == new_open_browser_status:
+            return
+        self.open_browser_status = new_open_browser_status
+        self.driver.quit()
+        if self.open_browser_mode.get():
+            # 使用Selenium開啟Edge瀏覽器
+            self.driver = webdriver.Edge()  # 請確保已下載並設定好Edge WebDriver的路徑
+        else:
+            # 配置無頭模式
+            edge_options = Options()
+            edge_options.add_argument("--headless")  # 啟用無頭模式
+            edge_options.add_argument("--disable-gpu")  # 在無頭模式下，禁用 GPU 加速有時是必要的
+            # 使用Selenium開啟Edge瀏覽器
+            self.driver = webdriver.Edge(options=edge_options)  # 確保已下載並設定好Edge WebDriver的路徑
+
     @staticmethod
     def open_711_link(url):
         webbrowser.open_new(url)
 
     def toggle_ui_elements(self, state=tk.DISABLED):
         """ 切換UI元件的可用性 """
-        elements = [self.acc_entry, self.sec_entry, self.se_entry, self.start_button, self.login_button,
+        elements = [self.acc_entry, self.sec_entry, self.se_entry,
+                    self.start_button, self.login_button, self.clear_msg_button, self.clear_cart_button,
+                    self.open_browser_checkbutton,
                     self.ky1_entry, self.ky2_entry, self.ky3_entry, self.ky4_entry, self.ky5_entry,
                     self.size1_dropdown, self.size2_dropdown, self.size3_dropdown,
                     self.size4_dropdown, self.size5_dropdown]
@@ -221,13 +247,53 @@ class MainApplication:  # 模組化
                 return False
         return True  # 檢查輸入欄位皆有輸入
 
+    def clear_cart(self):
+        # 購物車不用檢查是否登入狀態 + 不用檢查欄位是否有無正確輸入。
+        self.toggle_ui_elements()
+        self.toggle_open_browser_mode()  # 切換是否開啟瀏覽器狀態
+        threading.Thread(target=self.find_and_clear_cart, daemon=True).start()
+
+    def find_and_clear_cart(self):
+        self.show_log(f"檢查購物車中... isLogin:{self.is_login}")
+        try:
+            # 加載URL
+            self.driver.get(store_url)
+            self.driver.execute_script("$('a.sl-cart-toggle').click();")
+            time.sleep(1)  # 待購物車完全加載
+            # 定位到包含购物车状态的元素
+            cart_status_element = self.driver.find_element(By.XPATH, "//div[@ng-show='currentCart.isCartEmpty()']")
+
+            # 检查元素的class属性是否包含'ng-hide'
+            if 'ng-hide' in cart_status_element.get_attribute('class'):
+                self.show_log("購物車有商品，執行清空操作...")
+                # 执行清空购物车操作
+                delete_buttons = self.driver.find_elements(By.XPATH, "//a[contains(@ng-click, 'removeItemFromCart')]")
+                self.show_log(f"購物車數量:{delete_buttons}",False)
+                for button in delete_buttons:
+                    self.driver.execute_script("arguments[0].click();", button)
+                # 可能需要添加额外的等待时间或检查以确保操作完成
+                self.url_end("已清空購物車。")
+                self.driver.execute_script("document.getElementById('cart-panel').style.display='block';")
+            else:
+                self.url_end("購物車已為空。")
+
+        except NoSuchElementException:
+            self.url_end("找不到刪除按鈕，購物車可能已空。")
+        except TimeoutException:
+            self.url_end("操作超時，無法[清除購物車]狀態。")
+        except Exception as e:
+            self.show_log(f"無法確定[清除購物車]狀態：{e}", False)
+            self.url_end("無法確定[清除購物車]狀態。")
+
     def url_start(self):
+        self.clear_message()
         if self.check_input():
+            self.toggle_open_browser_mode()  # 切換是否開啟瀏覽器狀態
             self.toggle_ui_elements()
             # 在另一個線程中啟動長時間運行的操作，因為要確保show_log能及時在result_text中顯示，帥呆了 ><
-            threading.Thread(target=self.thread_task_buy_start, daemon=True).start()
+            threading.Thread(target=self.thread_task_by_start, daemon=True).start()
 
-    def thread_task_buy_start(self):
+    def thread_task_by_start(self):
         if self.is_login:
             self.add_product_to_shopping_cart()
         else:
@@ -246,10 +312,10 @@ class MainApplication:  # 模組化
         self.show_log("檢查登入狀態中...")
         try:
             # 加載URL
-            driver.get(store_url)
+            self.driver.get(store_url)
 
             # 取所有<a>
-            a_list = WebDriverWait(driver, 10).until(
+            a_list = WebDriverWait(self.driver, 10).until(
                 EC.presence_of_all_elements_located((By.CSS_SELECTOR, '.NavigationBar-actionMenu-button.nav-color'))
             )
 
@@ -301,7 +367,7 @@ class MainApplication:  # 模組化
             if ky.strip():  # 檢查是否前後都空白
                 buy_list.append({"pName": ky.strip(), "size": size_var.get()})
 
-        self.show_log(f"buy_list:{len(buy_list)}",False)
+        self.show_log(f"buy_list:{len(buy_list)}", False)
         # 返回购买列表
         return buy_list
 
@@ -423,7 +489,7 @@ class MainApplication:  # 模組化
     def checkout_products(self):
         self.show_log("[訂購流程]確認中...")
         try:
-            wait = WebDriverWait(driver, 10)
+            wait = WebDriverWait(self.driver, 10)
 
             # 前往填寫資料頁面
             checkout_button = wait.until(
@@ -432,7 +498,7 @@ class MainApplication:  # 模組化
             checkout_button.click()
 
             # 選擇門市
-            search_store_button = WebDriverWait(driver, 10).until(
+            search_store_button = WebDriverWait(self.driver, 10).until(
                 EC.element_to_be_clickable((By.CSS_SELECTOR, ".btn-pick-store"))
             )
             search_store_button.click()
@@ -462,41 +528,41 @@ class MainApplication:  # 模組化
     def search_711_store(self):
         try:
             # 點擊 '門市店號'
-            by_id_button = WebDriverWait(driver, 10).until(
+            by_id_button = WebDriverWait(self.driver, 10).until(
                 EC.element_to_be_clickable((By.ID, "byID"))
             )
             by_id_button.click()
 
-            driver.switch_to.frame("frmMain")
+            self.driver.switch_to.frame("frmMain")
 
             store_number = self.se_entry.get()
             # 輸入門市號碼
-            store_id_input = WebDriverWait(driver, 10).until(
+            store_id_input = WebDriverWait(self.driver, 10).until(
                 EC.element_to_be_clickable((By.ID, "storeIDKey"))
             )
             store_id_input.send_keys(store_number)  # 239444
 
             # 點擊 '搜尋'
-            search_button = driver.find_element(By.ID, "send")
+            search_button = self.driver.find_element(By.ID, "send")
             search_button.click()
 
             # 選擇門市
-            select_store = WebDriverWait(driver, 10).until(
+            select_store = WebDriverWait(self.driver, 10).until(
                 EC.element_to_be_clickable((By.XPATH, f"//li[contains(@onclick, 'showMap({store_number})')]"))
             )
             select_store.click()
 
-            driver.switch_to.default_content()
+            self.driver.switch_to.default_content()
             # 確認門市
-            confirm_button = driver.find_element(By.ID, "sevenDataBtn")
+            confirm_button = self.driver.find_element(By.ID, "sevenDataBtn")
             confirm_button.click()
 
             # 同意選擇門市
-            accept_button = driver.find_element(By.ID, "AcceptBtn")
+            accept_button = self.driver.find_element(By.ID, "AcceptBtn")
             accept_button.click()
 
             # 確認提交
-            submit_button = driver.find_element(By.ID, "submit_butn")
+            submit_button = self.driver.find_element(By.ID, "submit_butn")
             submit_button.click()
 
             return True
@@ -509,14 +575,14 @@ class MainApplication:  # 模組化
 
     def check_the_consent_form(self):
         try:
-            label_list = WebDriverWait(driver, 10).until(
+            label_list = WebDriverWait(self.driver, 10).until(
                 EC.presence_of_all_elements_located((By.CSS_SELECTOR, '.control-label'))
             )
             consent_count = 0
             for label in label_list:
                 try:
                     consent_form = label.find_element(By.NAME, 'policy')
-                    driver.execute_script("arguments[0].click();", consent_form)
+                    self.driver.execute_script("arguments[0].click();", consent_form)
                     consent_count += 1
                 except NoSuchElementException:
                     pass
@@ -543,11 +609,12 @@ class MainApplication:  # 模組化
 
     def url_login(self):
         if self.check_input(False):
+            self.toggle_open_browser_mode()  # 切換是否開啟瀏覽器狀態
             self.toggle_ui_elements()
             # 在另一個線程中啟動長時間運行的操作，因為要確保show_log能及時在result_text中顯示，帥呆了 ><
-            threading.Thread(target=self.thread_task_buy_login, daemon=True).start()
+            threading.Thread(target=self.thread_task_by_login, daemon=True).start()
 
-    def thread_task_buy_login(self):
+    def thread_task_by_login(self):
         check_is_login = self.check_login()
         if check_is_login is False:
             if self.login():
@@ -557,11 +624,11 @@ class MainApplication:  # 模組化
             self.url_end("-------------")
 
     def login(self):
-        driver.get(login_url)
+        self.driver.get(login_url)
         acc = self.acc_entry.get()
         sec = self.sec_entry.get()
         try:
-            wait = WebDriverWait(driver, 10)
+            wait = WebDriverWait(self.driver, 10)
 
             # 找到帳號輸入框並輸入帳號
             acc_input = wait.until(
@@ -591,7 +658,7 @@ class MainApplication:  # 模組化
 
     def login_is_success(self):
         try:
-            error_message_element = WebDriverWait(driver, 10).until(
+            error_message_element = WebDriverWait(self.driver, 10).until(
                 EC.visibility_of_element_located((By.CSS_SELECTOR, '.alert.alert-danger:not(.ng-hide) .ng-binding'))
             )
             if error_message_element:
@@ -624,6 +691,10 @@ class MainApplication:  # 模組化
         self.show_log(msg)
         self.master.after(0, self.toggle_ui_elements, tk.NORMAL)
 
+    def clear_message(self):
+        self.msg_text.config(state=tk.NORMAL)
+        self.msg_text.delete("1.0", tk.END)
+        self.msg_text.config(state=tk.DISABLED)
     # def fetch_product_ids(self):
     #     file_path = 'info.json'
     #     new_product_items = []
