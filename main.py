@@ -389,8 +389,8 @@ class MainApplication:  # 模組化
         is_sold_out = None
         try:
             # 加載URL (因登入成公會導頁到首頁，所以這邊還是需要將頁面導到goopi中)
-            driver.get(store_url)
-            wait = WebDriverWait(driver, 10)
+            self.driver.get(store_url)
+            wait = WebDriverWait(self.driver, 10)
 
             # 確認要買的商品
             # buy_list = [{"pName": "“RE-C01” Ryoiki Exp. Oversized Crewneck - D-Gray", "num": "5", "size": "3號"},
@@ -454,7 +454,7 @@ class MainApplication:  # 模組化
                             add_to_cart_button = info_dialog.find_element(By.ID, "btn-add-to-cart")
                             add_to_cart_button.click()
 
-                            driver.execute_script("document.getElementById('cart-panel').style.display='block';")
+                            self.driver.execute_script("document.getElementById('cart-panel').style.display='block';")
                             # 該死的關閉視窗有動畫，所以這邊要睡2秒確保它的動畫關閉
                             time.sleep(1)
                             self.show_log("添加到購物車 成功!!")
@@ -471,8 +471,8 @@ class MainApplication:  # 模組化
                 self.add_product_to_shopping_cart()
             else:
                 self.show_log(f"共添加 {add_car_count} 筆商品進購物車")
-                driver.execute_script("document.getElementById('cart-panel').style.display='block';")
-                car_dialog = WebDriverWait(driver, 10).until(
+                self.driver.execute_script("document.getElementById('cart-panel').style.display='block';")
+                car_dialog = WebDriverWait(self.driver, 10).until(
                     EC.visibility_of_element_located((By.ID, 'cart-panel'))
                 )
                 car_checkout_button = car_dialog.find_element(By.ID, "btn-checkout")
