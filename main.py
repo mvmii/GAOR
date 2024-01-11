@@ -49,8 +49,7 @@ class MainApplication:  # 模組化
         self.current_row = 1
         # 初始化 新增輸入關鍵字欄位 的次數
         self.add_ky_count = 0
-        self.blank_px = 18
-        self.px = 5
+        self.px = 6
         self.py = 2
         # [檢查加入購物車]次數
         self.check_add_cart_count = 0
@@ -95,8 +94,28 @@ class MainApplication:  # 模組化
         self.master.right_frame = tk.Frame(self.master.paned_window)
         self.master.paned_window.add(self.master.right_frame)
 
+        # self.n11_label = Label(self.master.left_frame, text="  ", background="blue")
+        # self.n11_label.grid(row=self.current_row, column=0, sticky="we", padx=self.px, pady=self.py)
+        # self.n2_label = Label(self.master.left_frame, text="  ", background="green")
+        # self.n2_label.grid(row=self.current_row, column=1, sticky="we", padx=self.px, pady=self.py)
+        # self.n3_label = Label(self.master.left_frame, text="  ", background="blue")
+        # self.n3_label.grid(row=self.current_row, column=2, sticky="we", padx=self.px, pady=self.py)
+        # self.n4_label = Label(self.master.left_frame, text="  ", background="green")
+        # self.n4_label.grid(row=self.current_row, column=3, sticky="we", padx=self.px, pady=self.py)
+        # self.n5_label = Label(self.master.left_frame, text="  ", background="blue")
+        # self.n5_label.grid(row=self.current_row, column=4, sticky="we", padx=self.px, pady=self.py)
+        # self.n6_label = Label(self.master.left_frame, text="  ", background="green")
+        # self.n6_label.grid(row=self.current_row, column=5, sticky="we", padx=self.px, pady=self.py)
+        # self.n7_label = Label(self.master.left_frame, text="  ", background="blue")
+        # self.n7_label.grid(row=self.current_row, column=6, sticky="we", padx=self.px, pady=self.py)
+        # self.n8_label = Label(self.master.left_frame, text="  ", background="green")
+        # self.n8_label.grid(row=self.current_row, column=7, sticky="we", padx=self.px, pady=self.py)
+        # self.n9_label = Label(self.master.left_frame, text="  ", background="blue")
+        # self.n9_label.grid(row=self.current_row, column=8, sticky="we", padx=self.px, pady=self.py)
+        # self.current_row += 1
+
         self.n1_label = Label(self.master.left_frame, text=self.tip)
-        self.n1_label.grid(row=self.current_row, column=0, sticky="we", padx=self.blank_px, pady=self.py, columnspan=8)
+        self.n1_label.grid(row=self.current_row, column=0, sticky="we", padx=self.px, pady=self.py, columnspan=8)
         self.current_row += 1
 
         # 輸入帳號 Str
@@ -126,7 +145,7 @@ class MainApplication:  # 模組化
         self.se_label.grid(row=self.current_row, column=0, sticky="w", padx=self.px, pady=self.py, columnspan=4)
         self.se_label.bind("<Button-1>", lambda e: self.open_711_link("https://emap.pcsc.com.tw/"))
         # 711-店號 input
-        self.se_entry = Entry(self.master.left_frame, width=15)
+        self.se_entry = Entry(self.master.left_frame)
         self.se_entry.grid(row=self.current_row, column=4, sticky="we", padx=self.px, pady=self.py, columnspan=2)
         self.se_entry.insert(0, "239444")
         self.current_row += 1
@@ -136,17 +155,17 @@ class MainApplication:  # 模組化
         # 檢查購物車迴圈次數 Str
         self.check_add_cart_count_label = Label(self.master.left_frame, text="檢查購物車迴圈次數:")
         self.check_add_cart_count_label.grid(row=self.current_row, column=0, sticky="w", padx=self.px, pady=self.py,
-                                             columnspan=2)
+                                             columnspan=3)
         # 輸入檢查購物車迴圈次數 input
         self.check_add_cart_count_entry = Entry(self.master.left_frame, validate='key',
                                                 validatecommand=validate_command, width=10)
-        self.check_add_cart_count_entry.grid(row=self.current_row, column=2, sticky="we", padx=self.px, pady=self.py,
+        self.check_add_cart_count_entry.grid(row=self.current_row, column=3, sticky="we", padx=self.px, pady=self.py,
                                              columnspan=2)
         self.check_add_cart_count_entry.insert(0, "100")
         # 檢查購物車迴圈次數 Str
         self.check_add_cart_count_tip_label = Label(self.master.left_frame, text="(輸入數字且最多三位數)")
-        self.check_add_cart_count_tip_label.grid(row=self.current_row, column=4, sticky="w", padx=self.px, pady=self.py,
-                                                 columnspan=2)
+        self.check_add_cart_count_tip_label.grid(row=self.current_row, column=5, sticky="w", padx=self.px, pady=self.py,
+                                                 columnspan=3)
         self.current_row += 1
 
         # 是否開啟瀏覽器
@@ -155,7 +174,7 @@ class MainApplication:  # 模組化
                                                        variable=self.open_browser_mode,
                                                        command=self.show_open_browser_tip)
         self.open_browser_checkbutton.grid(row=self.current_row, column=0, sticky="w", padx=self.px, pady=self.py,
-                                           columnspan=5)
+                                           columnspan=3)
         self.current_row += 1
 
         # 登入
@@ -167,23 +186,27 @@ class MainApplication:  # 模組化
                                     columnspan=3)
         # 開始下單
         self.start_button = Button(self.master.left_frame, text="開始下單", command=self.url_start)
-        self.start_button.grid(row=self.current_row, column=4, sticky="we", padx=self.px, pady=self.py)
+        self.start_button.grid(row=self.current_row, column=4, sticky="we", padx=self.px, pady=self.py, columnspan=2)
         # 清除右邊訊息
         self.clear_msg_button = Button(self.master.left_frame, text="清空右邊訊息", command=self.clear_message)
-        self.clear_msg_button.grid(row=self.current_row, column=5, sticky="we", padx=self.px, pady=self.py,
-                                   columnspan=1)
+        self.clear_msg_button.grid(row=self.current_row, column=6, sticky="we", padx=self.px, pady=self.py)
         self.current_row += 1
 
-        self.input_ky_label = Label(self.master.left_frame, text="輸入要買的新品關鍵字(含顏色)")
-        self.input_ky_label.grid(row=self.current_row, column=0, sticky="we", padx=self.px, pady=self.py, columnspan=6)
+        self.input_ky_label = Label(self.master.left_frame, text="輸入要買的新品關鍵字")
+        self.input_ky_label.grid(row=self.current_row, column=0, sticky="we", padx=self.px, pady=self.py, columnspan=5)
+        self.input_color_label = Label(self.master.left_frame, text="顏色")
+        self.input_color_label.grid(row=self.current_row, column=5, sticky="we", padx=self.px, pady=self.py)
         self.input_size_label = Label(self.master.left_frame, text="尺寸")
         self.input_size_label.grid(row=self.current_row, column=6, sticky="we", padx=self.px, pady=self.py)
         self.current_row += 1
 
         # 欄位1
         self.ky1_entry = Entry(self.master.left_frame)
-        self.ky1_entry.grid(row=self.current_row, column=0, padx=self.px, pady=self.py, columnspan=6, sticky="we")
+        self.ky1_entry.grid(row=self.current_row, column=0, padx=self.px, pady=self.py, columnspan=5, sticky="we")
         self.ky1_entry.insert(0, "Mid-H  Smock - L-Gray")
+        self.color1_entry = Entry(self.master.left_frame, width=2)
+        self.color1_entry.grid(row=self.current_row, column=5, padx=self.px, pady=self.py, sticky="we")
+        self.color1_entry.insert(0, "Gray")
         self.size1_var = StringVar(self.master.left_frame)
         self.size1_var.set("無")
         self.size1_dropdown = OptionMenu(self.master.left_frame, self.size1_var, "1號", "2號", "3號", "無")
@@ -192,8 +215,10 @@ class MainApplication:  # 模組化
 
         # 欄位2
         self.ky2_entry = Entry(self.master.left_frame)
-        self.ky2_entry.grid(row=self.current_row, column=0, padx=self.px, pady=self.py, columnspan=6, sticky="we")
+        self.ky2_entry.grid(row=self.current_row, column=0, padx=self.px, pady=self.py, columnspan=5, sticky="we")
         self.ky2_entry.insert(0, "Mid-H  Smock - Black")
+        self.color2_entry = Entry(self.master.left_frame, width=2)
+        self.color2_entry.grid(row=self.current_row, column=5, padx=self.px, pady=self.py, sticky="we")
         self.size2_var = StringVar(self.master.left_frame)
         self.size2_var.set("無")
         self.size2_dropdown = OptionMenu(self.master.left_frame, self.size2_var, "1號", "2號", "3號", "無")
@@ -202,7 +227,9 @@ class MainApplication:  # 模組化
 
         # 欄位3
         self.ky3_entry = Entry(self.master.left_frame)
-        self.ky3_entry.grid(row=self.current_row, column=0, padx=self.px, pady=self.py, columnspan=6, sticky="we")
+        self.ky3_entry.grid(row=self.current_row, column=0, padx=self.px, pady=self.py, columnspan=5, sticky="we")
+        self.color3_entry = Entry(self.master.left_frame, width=2)
+        self.color3_entry.grid(row=self.current_row, column=5, padx=self.px, pady=self.py, sticky="we")
         self.size3_var = StringVar(self.master.left_frame)
         self.size3_var.set("無")
         self.size3_dropdown = OptionMenu(self.master.left_frame, self.size3_var, "1號", "2號", "3號", "無")
@@ -211,7 +238,9 @@ class MainApplication:  # 模組化
 
         # 欄位4
         self.ky4_entry = Entry(self.master.left_frame)
-        self.ky4_entry.grid(row=self.current_row, column=0, padx=self.px, pady=self.py, columnspan=6, sticky="we")
+        self.ky4_entry.grid(row=self.current_row, column=0, padx=self.px, pady=self.py, columnspan=5, sticky="we")
+        self.color4_entry = Entry(self.master.left_frame, width=2)
+        self.color4_entry.grid(row=self.current_row, column=5, padx=self.px, pady=self.py, sticky="we")
         self.size4_var = StringVar(self.master.left_frame)
         self.size4_var.set("無")
         self.size4_dropdown = OptionMenu(self.master.left_frame, self.size4_var, "1號", "2號", "3號", "無")
@@ -220,7 +249,9 @@ class MainApplication:  # 模組化
 
         # 欄位5
         self.ky5_entry = Entry(self.master.left_frame)
-        self.ky5_entry.grid(row=self.current_row, column=0, padx=self.px, pady=self.py, columnspan=6, sticky="we")
+        self.ky5_entry.grid(row=self.current_row, column=0, padx=self.px, pady=self.py, columnspan=5, sticky="we")
+        self.color5_entry = Entry(self.master.left_frame, width=2)
+        self.color5_entry.grid(row=self.current_row, column=5, padx=self.px, pady=self.py, sticky="we")
         self.size5_var = StringVar(self.master.left_frame)
         self.size5_var.set("無")
         self.size5_dropdown = OptionMenu(self.master.left_frame, self.size5_var, "1號", "2號", "3號", "無")
@@ -282,6 +313,7 @@ class MainApplication:  # 模組化
                     self.check_add_cart_count_entry,
                     self.open_browser_checkbutton,
                     self.ky1_entry, self.ky2_entry, self.ky3_entry, self.ky4_entry, self.ky5_entry,
+                    self.color1_entry, self.color2_entry, self.color3_entry, self.color4_entry, self.color5_entry,
                     self.size1_dropdown, self.size2_dropdown, self.size3_dropdown,
                     self.size4_dropdown, self.size5_dropdown]
         for element in elements:
