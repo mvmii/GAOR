@@ -2,6 +2,7 @@
 Goopi自動化下單
 
 pip install pyinstaller (將py轉exe)
+
 pyinstaller --onefile main.py  (產exe)
 
 此次GUI使用【Tkinter】來實作
