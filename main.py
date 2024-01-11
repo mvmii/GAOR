@@ -33,8 +33,8 @@ def validate_input(P):
         :param P: 输入框中的文本。
         :return: 布尔值，表示输入是否有效。
         """
-    # 检查输入是否只包含数字，并且长度不超过3
-    if P.isdigit() and len(P) <= 3:
+    # 检查输入是否只包含数字，并且长度不超过5
+    if P.isdigit() and len(P) <= 5:
         return True
     elif P == "":
         return True  # 允许空字符串，以便清除输入
@@ -152,16 +152,16 @@ class MainApplication:  # 模組化
         # 檢查購物車迴圈次數 Str
         self.check_add_cart_count_label = Label(self.master.left_frame, text="檢查購物車迴圈次數:")
         self.check_add_cart_count_label.grid(row=self.current_row, column=0, sticky="w", padx=self.px, pady=self.py,
-                                             columnspan=3)
+                                             columnspan=2)
         # 輸入檢查購物車迴圈次數 input
         self.check_add_cart_count_entry = Entry(self.master.left_frame, validate='key',
                                                 validatecommand=validate_command, width=10)
-        self.check_add_cart_count_entry.grid(row=self.current_row, column=3, sticky="we", padx=self.px, pady=self.py,
+        self.check_add_cart_count_entry.grid(row=self.current_row, column=2, sticky="we", padx=self.px, pady=self.py,
                                              columnspan=2)
-        self.check_add_cart_count_entry.insert(0, "50")
+        self.check_add_cart_count_entry.insert(0, "999")
         # 檢查購物車迴圈次數 Str
-        self.check_add_cart_count_tip_label = Label(self.master.left_frame, text="(輸入數字且最多三位數)")
-        self.check_add_cart_count_tip_label.grid(row=self.current_row, column=5, sticky="w", padx=self.px, pady=self.py,
+        self.check_add_cart_count_tip_label = Label(self.master.left_frame, text="(輸入數字且最多五位數)")
+        self.check_add_cart_count_tip_label.grid(row=self.current_row, column=4, sticky="w", padx=self.px, pady=self.py,
                                                  columnspan=3)
         self.current_row += 1
 
@@ -178,15 +178,20 @@ class MainApplication:  # 模組化
         self.login_button = Button(self.master.left_frame, text="登入", command=self.url_login)
         self.login_button.grid(row=self.current_row, column=0, sticky="we", padx=self.px, pady=self.py)
         # 清除購物車
-        self.clear_cart_button = Button(self.master.left_frame, text="清除購物車", command=self.clear_cart)
+        self.clear_cart_button = Button(self.master.left_frame, text="清除購物車", command=self.clear_cart, width=10)
         self.clear_cart_button.grid(row=self.current_row, column=1, sticky="we", padx=self.px, pady=self.py,
-                                    columnspan=3)
+                                    columnspan=2)
+        # 清除右邊訊息
+        self.clear_msg_button = Button(self.master.left_frame, text="清空右邊訊息", command=self.clear_message, width=18)
+        self.clear_msg_button.grid(row=self.current_row, column=3, sticky="we", padx=self.px, pady=self.py,
+                                   columnspan=2)
         # 開始下單
         self.start_button = Button(self.master.left_frame, text="開始下單", command=self.url_start)
-        self.start_button.grid(row=self.current_row, column=4, sticky="we", padx=self.px, pady=self.py, columnspan=2)
-        # 清除右邊訊息
-        self.clear_msg_button = Button(self.master.left_frame, text="清空右邊訊息", command=self.clear_message)
-        self.clear_msg_button.grid(row=self.current_row, column=6, sticky="we", padx=self.px, pady=self.py)
+        self.start_button.grid(row=self.current_row, column=5, sticky="we", padx=self.px, pady=self.py)
+        # 停止
+        self.stop_button = Button(self.master.left_frame, text="停止檢查迴圈", command=self.stop_search_product)
+        self.stop_button.grid(row=self.current_row, column=6, sticky="we", padx=self.px, pady=self.py)
+        self.stop_button.config(state=tk.DISABLED)
         self.current_row += 1
 
         self.input_ky_label = Label(self.master.left_frame, text="輸入要買的新品關鍵字")
@@ -373,6 +378,9 @@ class MainApplication:  # 模組化
             self.show_log(f"無法確定[清除購物車]狀態：{e}", False)
             self.url_end("無法確定[清除購物車]狀態。")
 
+    def stop_search_product(self):
+        self.check_add_cart_count = self.check_add_cart_num
+
     def url_start(self):
         if self.check_input():
             self.toggle_open_browser_mode()  # 切換是否開啟瀏覽器狀態
@@ -396,9 +404,11 @@ class MainApplication:  # 模組化
 
     def start_ordering_process(self):
         try:
+            self.stop_button.config(state=tk.NORMAL)
             # 商品添加至購物車數量
             self.check_add_cart_num = self.get_add_cart_count_value()
             add_cart_num = self.add_product_to_shopping_cart()
+            self.stop_button.config(state=tk.DISABLED)
             # 不管所有商品添加 失敗 還是 成功，只要有成功添加一件商品就走訂購流程
             if add_cart_num is not None and add_cart_num > 0:
                 self.show_log(f"購物車共有 {add_cart_num} 筆商品。")
@@ -615,7 +625,7 @@ class MainApplication:  # 模組化
                                 pass
                 # for迴圈結束 ^
             if matched_count == 0:
-                if self.check_add_cart_count is self.check_add_cart_num:
+                if self.check_add_cart_count >= self.check_add_cart_num:
                     self.check_add_cart_count = 0
                     return 0
                 self.show_log("無商品添加至購物車，繼續檢查中...")
