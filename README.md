@@ -5,6 +5,10 @@ pip install pyinstaller (將py轉exe)
 
 pyinstaller --onefile main.py  (產exe)
 
+
+
+
+
 此次GUI使用【Tkinter】來實作
 
 Tkinter是Python标准库中自带的GUI库，因此不需要额外安装。
@@ -12,6 +16,11 @@ Tkinter是Python标准库中自带的GUI库，因此不需要额外安装。
 它提供了相对简单的接口，适合初学者。然而，它的外观相对较为简单，可能不如其他库提供的现代化外观。
 
 Tkinter基于Tk GUI工具包，它是一个跨平台的工具包，但在某些平台上可能没有其他库那么好看。
+
+
+
+
+
 
 使用此系統前
 
@@ -28,6 +37,9 @@ https://www.goopi.co/
 
 
 ![螢幕擷取畫面 2024-01-11 183350](https://github.com/mvmii/GAOR/assets/95043011/5e0f22f5-f7be-4bbd-8e35-cd3628165177)
+
+
+
 
 
 先點擊【7-11店號(6位數)，點擊我可查詢】
