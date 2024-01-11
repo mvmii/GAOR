@@ -124,7 +124,6 @@ class MainApplication:  # 模組化
         # 輸入帳號 input
         self.acc_entry = Entry(self.master.left_frame, width=30)
         self.acc_entry.grid(row=self.current_row, column=1, sticky="we", padx=self.px, pady=self.py, columnspan=5)
-        self.acc_entry.insert(0, "love_8462564@yahoo.com.tw")
         self.current_row += 1
 
         # 輸入密碼 Str
@@ -133,7 +132,6 @@ class MainApplication:  # 模組化
         # 輸入密碼 input
         self.sec_entry = Entry(self.master.left_frame, width=30, show="*")
         self.sec_entry.grid(row=self.current_row, column=1, sticky="we", padx=self.px, pady=self.py, columnspan=4)
-        self.sec_entry.insert(0, "mvmii1234")
         # 切換顯示密碼的按鈕
         self.toggle_button = Button(self.master.left_frame, text="Show", command=self.toggle_password)
         self.toggle_button.grid(row=self.current_row, column=5, padx=self.px, pady=self.py, sticky="w")
@@ -147,7 +145,6 @@ class MainApplication:  # 模組化
         # 711-店號 input
         self.se_entry = Entry(self.master.left_frame)
         self.se_entry.grid(row=self.current_row, column=4, sticky="we", padx=self.px, pady=self.py, columnspan=2)
-        self.se_entry.insert(0, "239444")
         self.current_row += 1
 
         # 建立 [檢查購物車迴圈次數] 驗證器
@@ -203,10 +200,8 @@ class MainApplication:  # 模組化
         # 欄位1
         self.ky1_entry = Entry(self.master.left_frame)
         self.ky1_entry.grid(row=self.current_row, column=0, padx=self.px, pady=self.py, columnspan=5, sticky="we")
-        self.ky1_entry.insert(0, "Mid-H  Smock")
         self.color1_entry = Entry(self.master.left_frame, width=2)
         self.color1_entry.grid(row=self.current_row, column=5, padx=self.px, pady=self.py, sticky="we")
-        self.color1_entry.insert(0, "Gray")
         self.size1_var = StringVar(self.master.left_frame)
         self.size1_var.set("無")
         self.size1_dropdown = OptionMenu(self.master.left_frame, self.size1_var, "1號", "2號", "3號", "無")
@@ -216,7 +211,6 @@ class MainApplication:  # 模組化
         # 欄位2
         self.ky2_entry = Entry(self.master.left_frame)
         self.ky2_entry.grid(row=self.current_row, column=0, padx=self.px, pady=self.py, columnspan=5, sticky="we")
-        self.ky2_entry.insert(0, "G7-FM   Parka")
         self.color2_entry = Entry(self.master.left_frame, width=2)
         self.color2_entry.grid(row=self.current_row, column=5, padx=self.px, pady=self.py, sticky="we")
         self.size2_var = StringVar(self.master.left_frame)
@@ -676,11 +670,11 @@ class MainApplication:  # 模組化
                 # 勾選同意書
                 if self.check_the_consent_form():
                     self.show_log("同意書已點擊正確，提交訂單中...")
-                    # # 點擊[提交訂單]按鈕
-                    # place_order_button = WebDriverWait(driver, 10).until(
-                    #     EC.element_to_be_clickable((By.ID, "place-order-recaptcha"))
-                    # )
-                    # self.driver.execute_script("arguments[0].click();", place_order_button)
+                    # 點擊[提交訂單]按鈕
+                    place_order_button = WebDriverWait(self.driver, 10).until(
+                        EC.element_to_be_clickable((By.ID, "place-order-recaptcha"))
+                    )
+                    self.driver.execute_script("arguments[0].click();", place_order_button)
                     self.url_end("下單完成，麻煩請至會員資料查收訂單是否有正常交易。")
                 else:
                     self.url_end("同意書點擊異常，停止下單。")
