@@ -21,9 +21,25 @@ import re
 import time
 import webbrowser
 from datetime import datetime
+from tkinter import messagebox
 
 store_url = "https://www.goopi.co/categories/goopimade-goopi-%E5%AD%A4%E5%83%BB?sort_by=created_at&order_by=desc"
 login_url = "https://www.goopi.co/users/sign_in"
+
+
+def validate_input(P):
+    """
+        验证输入是否为最多三位的数字。
+        :param P: 输入框中的文本。
+        :return: 布尔值，表示输入是否有效。
+        """
+    # 检查输入是否只包含数字，并且长度不超过3
+    if P.isdigit() and len(P) <= 3:
+        return True
+    elif P == "":
+        return True  # 允许空字符串，以便清除输入
+    else:
+        return False
 
 
 class MainApplication:  # 模組化
@@ -51,7 +67,7 @@ class MainApplication:  # 模組化
                     "7.登入太頻繁，會登入失敗，請等待10分鐘後再登入。\n"
                     "8.付款方式皆為預設 : 7-11取貨不付款，線上刷卡")
         self.is_login = False
-        self.open_browser_mode = tk.BooleanVar(value=False)  # 默认为非无头模式
+        self.open_browser_mode = tk.BooleanVar(value=True)  # 默认为非无头模式
         self.open_browser_status = False
         # 配置無頭模式
         edge_options = Options()
@@ -97,8 +113,11 @@ class MainApplication:  # 模組化
         self.sec_label.grid(row=self.current_row, column=0, sticky="w", padx=self.px, pady=self.py)
         # 輸入密碼 input
         self.sec_entry = Entry(self.master.left_frame, width=30, show="*")
-        self.sec_entry.grid(row=self.current_row, column=1, sticky="we", padx=self.px, pady=self.py, columnspan=5)
+        self.sec_entry.grid(row=self.current_row, column=1, sticky="we", padx=self.px, pady=self.py, columnspan=4)
         self.sec_entry.insert(0, "mvmii1234")
+        # 切換顯示密碼的按鈕
+        self.toggle_button = Button(self.master.left_frame, text="Show", command=self.toggle_password)
+        self.toggle_button.grid(row=self.current_row, column=5, padx=self.px, pady=self.py, sticky="w")
         self.current_row += 1
 
         # 711-店號
@@ -113,7 +132,7 @@ class MainApplication:  # 模組化
         self.current_row += 1
 
         # 建立 [檢查購物車迴圈次數] 驗證器
-        validate_command = root.register(self.validate_input), '%P'
+        validate_command = root.register(validate_input), '%P'
         # 檢查購物車迴圈次數 Str
         self.check_add_cart_count_label = Label(self.master.left_frame, text="檢查購物車迴圈次數:")
         self.check_add_cart_count_label.grid(row=self.current_row, column=0, sticky="w", padx=self.px, pady=self.py,
@@ -131,8 +150,10 @@ class MainApplication:  # 模組化
         self.current_row += 1
 
         # 是否開啟瀏覽器
-        self.open_browser_checkbutton = tk.Checkbutton(self.master.left_frame, text="開啟Edge瀏覽器(不開啟RUN比較快唷)",
-                                                       variable=self.open_browser_mode)
+        self.open_browser_checkbutton = tk.Checkbutton(self.master.left_frame,
+                                                       text="開啟Edge瀏覽器",
+                                                       variable=self.open_browser_mode,
+                                                       command=self.show_open_browser_tip)
         self.open_browser_checkbutton.grid(row=self.current_row, column=0, sticky="w", padx=self.px, pady=self.py,
                                            columnspan=5)
         self.current_row += 1
@@ -216,19 +237,20 @@ class MainApplication:  # 模組化
         self.msg_text.config(state=tk.DISABLED)  # 默认不可编辑
         self.scrollbar.config(command=self.msg_text.yview)
 
-    def validate_input(self, P):
-        """
-        验证输入是否为最多三位的数字。
-        :param P: 输入框中的文本。
-        :return: 布尔值，表示输入是否有效。
-        """
-        # 检查输入是否只包含数字，并且长度不超过3
-        if P.isdigit() and len(P) <= 3:
-            return True
-        elif P == "":
-            return True  # 允许空字符串，以便清除输入
+    def show_open_browser_tip(self):
+        open_br_status = self.open_browser_mode.get()
+        tip = "[關閉Edge瀏覽器]執行自動下單，會時常抓取元素失敗\n在此建議開啟瀏覽器自動化下單。(我就爛)"
+        if open_br_status:
+            tip = "[開啟Edge瀏覽器]執行自動下單時，若遇到錯誤\n麻煩截圖並提供畫面供除蟲，謝謝。"
+        messagebox.showinfo("注意", tip)
+
+    def toggle_password(self):
+        if self.sec_entry.cget('show') == '*':
+            self.sec_entry.config(show='')
+            self.toggle_button.config(text='Hide')
         else:
-            return False
+            self.sec_entry.config(show='*')
+            self.toggle_button.config(text='Show')
 
     def toggle_open_browser_mode(self):
         new_open_browser_status = self.open_browser_mode.get()
@@ -255,7 +277,7 @@ class MainApplication:  # 模組化
 
     def toggle_ui_elements(self, state=tk.DISABLED):
         """ 切換UI元件的可用性 """
-        elements = [self.acc_entry, self.sec_entry, self.se_entry,
+        elements = [self.acc_entry, self.sec_entry, self.se_entry, self.toggle_button,
                     self.start_button, self.login_button, self.clear_msg_button, self.clear_cart_button,
                     self.check_add_cart_count_entry,
                     self.open_browser_checkbutton,
@@ -358,12 +380,12 @@ class MainApplication:  # 模組化
                 time.sleep(0.5)
                 # 開啟購物車
                 self.driver.execute_script("document.getElementById('cart-panel').style.display='block';")
-                car_dialog = WebDriverWait(self.driver, 10).until(
+                cart_dialog = WebDriverWait(self.driver, 10).until(
                     EC.visibility_of_element_located((By.ID, 'cart-panel'))
                 )
                 # 點擊下單
-                car_checkout_button = car_dialog.find_element(By.ID, "btn-checkout")
-                car_checkout_button.click()
+                cart_checkout_button = cart_dialog.find_element(By.ID, "btn-checkout")
+                self.driver.execute_script("arguments[0].click();", cart_checkout_button)
                 # 待調整 : 需要檢查是否為登入狀態
                 # 進入訂購畫面
                 self.checkout_products()
@@ -503,7 +525,7 @@ class MainApplication:  # 模組化
                         add_car = item.find_element(
                             By.CSS_SELECTOR,
                             ".btn-add-to-cart.js-btn-add-to-cart.mobile-cart.visible-xs.visible-sm")
-                        add_car.click()
+                        self.driver.execute_script("arguments[0].click();", add_car)
 
                         # 選擇尺寸跟數量的視窗，這邊只點擊尺寸。定位到弹窗外层div
                         info_dialog = wait.until(
@@ -531,7 +553,7 @@ class MainApplication:  # 模組化
                             self.driver.execute_script("arguments[0].click();", info_dialog)
                         else:
                             add_to_cart_button = info_dialog.find_element(By.ID, "btn-add-to-cart")
-                            add_to_cart_button.click()
+                            self.driver.execute_script("arguments[0].click();", add_to_cart_button)
                             pr_is_over = self.product_num_is_over()
                             if pr_is_over:
                                 self.show_log("該商品購買上限為 1 件，購物車已有此商品。")
@@ -593,12 +615,14 @@ class MainApplication:  # 模組化
                 EC.element_to_be_clickable((By.CSS_SELECTOR, '.btn.btn-success.btn-block.btn-checkout'))
             )
             checkout_button.click()
+            # self.driver.execute_script("arguments[0].click();", checkout_button)
 
             # 選擇門市
             search_store_button = WebDriverWait(self.driver, 10).until(
                 EC.element_to_be_clickable((By.CSS_SELECTOR, ".btn-pick-store"))
             )
             search_store_button.click()
+            # self.driver.execute_script("arguments[0].click();", search_store_button)
 
             if self.search_711_store():
                 self.show_log("選擇711門市已完成")
@@ -609,7 +633,7 @@ class MainApplication:  # 模組化
                     # place_order_button = WebDriverWait(driver, 10).until(
                     #     EC.element_to_be_clickable((By.ID, "place-order-recaptcha"))
                     # )
-                    # place_order_button.click()
+                    # self.driver.execute_script("arguments[0].click();", place_order_button)
                     self.url_end("下單完成，麻煩請至會員資料查收訂單是否有正常交易。")
                 else:
                     self.url_end("同意書點擊異常，停止下單。")
@@ -629,46 +653,48 @@ class MainApplication:  # 模組化
             by_id_button = WebDriverWait(self.driver, 10).until(
                 EC.element_to_be_clickable((By.ID, "byID"))
             )
-            by_id_button.click()
+            self.driver.execute_script("arguments[0].click();", by_id_button)
 
             self.driver.switch_to.frame("frmMain")
 
             store_number = self.se_entry.get()
+            self.show_log(f"選取7-11店號:{store_number}")
             # 輸入門市號碼
             store_id_input = WebDriverWait(self.driver, 10).until(
                 EC.element_to_be_clickable((By.ID, "storeIDKey"))
             )
-            store_id_input.send_keys(store_number)  # 239444
+            store_id_input.send_keys(store_number)
 
             # 點擊 '搜尋'
             search_button = self.driver.find_element(By.ID, "send")
-            search_button.click()
+            self.driver.execute_script("arguments[0].click();", search_button)
 
             # 選擇門市
             select_store = WebDriverWait(self.driver, 10).until(
                 EC.element_to_be_clickable((By.XPATH, f"//li[contains(@onclick, 'showMap({store_number})')]"))
             )
-            select_store.click()
+            self.driver.execute_script("arguments[0].click();", select_store)
 
             self.driver.switch_to.default_content()
             # 確認門市
             confirm_button = self.driver.find_element(By.ID, "sevenDataBtn")
-            confirm_button.click()
+            self.driver.execute_script("arguments[0].click();", confirm_button)
 
             # 同意選擇門市
             accept_button = self.driver.find_element(By.ID, "AcceptBtn")
-            accept_button.click()
+            self.driver.execute_script("arguments[0].click();", accept_button)
 
             # 確認提交
             submit_button = self.driver.find_element(By.ID, "submit_butn")
-            submit_button.click()
+            self.driver.execute_script("arguments[0].click();", submit_button)
 
             return True
         except TimeoutException:
             self.show_log("操作超時，無法取得[搜尋門市]狀態。")
             return False
         except Exception as e:
-            self.show_log(f"無法確定[搜尋門市]狀態：{e}")
+            self.show_log(f"無法確定[搜尋門市]狀態：{e}", False)
+            self.show_log("無法確定[搜尋門市]狀態")
             return False
 
     def check_the_consent_form(self):
@@ -692,7 +718,7 @@ class MainApplication:  # 模組化
                         By.CSS_SELECTOR,
                         'input[type="checkbox"][data-e2e-id="order-delivery-recipient-is-customer_checkbox"]')
                     if recipient_info:
-                        label.click()
+                        self.driver.execute_script("arguments[0].click();", label)
                         consent_count += 1
                 except NoSuchElementException:
                     # 處理元素未找到的情況
@@ -747,7 +773,7 @@ class MainApplication:  # 模組化
             login_button = wait.until(
                 EC.visibility_of_element_located((By.CSS_SELECTOR, "button[data-e2e-id='login-submit_button']"))
             )
-            login_button.click()
+            self.driver.execute_script("arguments[0].click();", login_button)
 
             return self.login_is_success()
         except TimeoutException:
