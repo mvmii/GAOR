@@ -161,7 +161,7 @@ class MainApplication:  # 模組化
                                                 validatecommand=validate_command, width=10)
         self.check_add_cart_count_entry.grid(row=self.current_row, column=3, sticky="we", padx=self.px, pady=self.py,
                                              columnspan=2)
-        self.check_add_cart_count_entry.insert(0, "100")
+        self.check_add_cart_count_entry.insert(0, "50")
         # 檢查購物車迴圈次數 Str
         self.check_add_cart_count_tip_label = Label(self.master.left_frame, text="(輸入數字且最多三位數)")
         self.check_add_cart_count_tip_label.grid(row=self.current_row, column=5, sticky="w", padx=self.px, pady=self.py,
@@ -203,7 +203,7 @@ class MainApplication:  # 模組化
         # 欄位1
         self.ky1_entry = Entry(self.master.left_frame)
         self.ky1_entry.grid(row=self.current_row, column=0, padx=self.px, pady=self.py, columnspan=5, sticky="we")
-        self.ky1_entry.insert(0, "Mid-H  Smock - L-Gray")
+        self.ky1_entry.insert(0, "Mid-H  Smock")
         self.color1_entry = Entry(self.master.left_frame, width=2)
         self.color1_entry.grid(row=self.current_row, column=5, padx=self.px, pady=self.py, sticky="we")
         self.color1_entry.insert(0, "Gray")
@@ -216,7 +216,7 @@ class MainApplication:  # 模組化
         # 欄位2
         self.ky2_entry = Entry(self.master.left_frame)
         self.ky2_entry.grid(row=self.current_row, column=0, padx=self.px, pady=self.py, columnspan=5, sticky="we")
-        self.ky2_entry.insert(0, "Mid-H  Smock - Black")
+        self.ky2_entry.insert(0, "G7-FM   Parka")
         self.color2_entry = Entry(self.master.left_frame, width=2)
         self.color2_entry.grid(row=self.current_row, column=5, padx=self.px, pady=self.py, sticky="we")
         self.size2_var = StringVar(self.master.left_frame)
@@ -483,18 +483,18 @@ class MainApplication:  # 模組化
 
         # 组合条目和尺寸变量
         entries_and_sizes = [
-            (self.ky1_entry, self.size1_var),
-            (self.ky2_entry, self.size2_var),
-            (self.ky3_entry, self.size3_var),
-            (self.ky4_entry, self.size4_var),
-            (self.ky5_entry, self.size5_var)
+            (self.ky1_entry, self.color1_entry, self.size1_var),
+            (self.ky2_entry, self.color2_entry, self.size2_var),
+            (self.ky3_entry, self.color3_entry, self.size3_var),
+            (self.ky4_entry, self.color4_entry, self.size4_var),
+            (self.ky5_entry, self.color5_entry, self.size5_var)
         ]
 
         # 遍历组合，构建购买列表
-        for entry, size_var in entries_and_sizes:
+        for entry, color, size_var in entries_and_sizes:
             ky = entry.get()
             if ky.strip():  # 檢查是否前後都空白
-                buy_list.append({"pName": ky.strip(), "size": size_var.get()})
+                buy_list.append({"pName": ky.strip(), "color": color.get().strip(), "size": size_var.get()})
 
         self.show_log(f"buy_list:{len(buy_list)}", False)
         # 返回购买列表
@@ -505,14 +505,23 @@ class MainApplication:  # 模組化
         # 轉小寫 + 去除空白空格
         return ''.join(string.lower().split())
 
-    def find_product_by_keyword(self, keyword, buy_list):
-        # 将关键词格式化为小写以实现大小写不敏感的搜索
-        keyword = self.remove_spaces(keyword)
+    def find_product_by_keyword(self, product, color, buy_list):
+        product_fun1 = self.remove_spaces(product)
+        product_fun2 = product.lower()
+        color = color.lower()
+
         for item in buy_list:
-            item_name = self.remove_spaces(item["pName"])
-            self.show_log(f"item name: {item_name}", False)
-            # 检查商品名称是否包含关键词
-            if item_name in keyword:
+            item_name = item["pName"]
+            item_color = item["color"].lower()
+            # 移除所有空白並轉小寫比對 + 比對顏色
+            if self.remove_spaces(item_name) in product_fun1 and item_color in color:
+                self.show_log("matched_fun1", False)
+                return item
+            # 過濾2個空白以上為一個空白，並轉小寫且切割空白為一個list去比對keywords是否有含括在產品名稱裡 + 比對顏色
+            product_name_keywords = re.sub(r'\s+', ' ', item_name).strip().lower().split()
+            if all(keyword in product_fun2 for keyword in product_name_keywords) and \
+                    (not item_color or item_color in color):
+                self.show_log("matched_fun2", False)
                 return item
         # 如果没有找到匹配的商品，则返回None或相应的消息
         return None
@@ -545,8 +554,14 @@ class MainApplication:  # 模組化
                 product_status_elements = item.find_elements(By.CSS_SELECTOR, ".sold-out-item")
                 product_status = 1 if product_status_elements else 0  # 1:已售完，0:還有庫存
 
-                self.show_log(f"product_id: {product_id}，product_name:{product_name}", False)
-                matched_product = self.find_product_by_keyword(product_name, buy_list)
+                new_product_name = product_name
+                product_color = ""
+                if " - " in product_name:
+                    # 如果存在顏色信息，按照之前的邏輯分割
+                    new_product_name, _, product_color = product_name.rpartition(" - ")
+
+                self.show_log(f"id: {product_id}，name:{new_product_name}，color:{product_color}", False)
+                matched_product = self.find_product_by_keyword(new_product_name, product_color, buy_list)
                 # 检查是否找到匹配项
                 if matched_product:
                     matched_count += 1
