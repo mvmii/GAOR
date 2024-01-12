@@ -4,6 +4,7 @@
 #             pip install pyinstaller (將py轉exe)
 #             pyinstaller --onefile main.py  (產exe)
 #             pip install selenium  (以訪客身分開啟 Edge 並加載當前網址)
+#             pip install pycryptodome  ( AES 加密 )
 
 # 簡單說明 GUI類型  目前先使用【Tkinter】來實作
 
@@ -22,6 +23,12 @@ import time
 import webbrowser
 from datetime import datetime
 from tkinter import messagebox
+
+from aes_cipher import AESCipher
+from verify_window import VerifyWindow
+import json
+import string
+import random
 
 store_url = "https://www.goopi.co/categories/goopimade-goopi-%E5%AD%A4%E5%83%BB?sort_by=created_at&order_by=desc"
 login_url = "https://www.goopi.co/users/sign_in"
@@ -42,7 +49,7 @@ def validate_input(P):
         return False
 
 
-class MainApplication:  # 模組化
+class MainWindow:  # 模組化
     def __init__(self, master):
         # 設置變數
         # UI的row
@@ -182,7 +189,8 @@ class MainApplication:  # 模組化
         self.clear_cart_button.grid(row=self.current_row, column=1, sticky="we", padx=self.px, pady=self.py,
                                     columnspan=2)
         # 清除右邊訊息
-        self.clear_msg_button = Button(self.master.left_frame, text="清空右邊訊息", command=self.clear_message, width=18)
+        self.clear_msg_button = Button(self.master.left_frame, text="清空右邊訊息", command=self.clear_message,
+                                       width=18)
         self.clear_msg_button.grid(row=self.current_row, column=3, sticky="we", padx=self.px, pady=self.py,
                                    columnspan=2)
         # 開始下單
@@ -1007,8 +1015,50 @@ class MainApplication:  # 模組化
     #         self.add_ky_button.config(state='normal')
 
 
+def generate_random_string(length):
+    characters = string.ascii_letters + string.digits  # 包括字母和数字
+    return ''.join(random.choice(characters) for i in range(length))
+
+
+def get_or_create_key(aes):
+    data = {"acc": "", "sec": "", "storyNum": 0, "key": "", "pass": False}
+    # 檢查當前目錄下是否有 user.json 檔案
+    if os.path.isfile('user.json'):
+        with open('user.json', 'r') as file:
+            data = json.load(file)
+
+    if 'key' in data and data.get('key'):
+        encrypted_code = data.get('key')
+        if 'pass' in data and data['pass']:
+            return None
+    else:
+        # 如果 "key" 字段不存在或为空，则生成新的随机码
+        random_code = generate_random_string(32)
+        encrypted_code = aes.encrypt(random_code)
+
+    data['acc'] = data.get('acc')
+    data['sec'] = data.get('sec')
+    data['storyNum'] = data.get('storyNum')
+    data['key'] = encrypted_code
+    data['pass'] = False
+
+    # 寫入 user.json
+    with open('user.json', 'w') as file:
+        json.dump(data, file)
+    return data['key']
+
+
 if __name__ == "__main__":
     # 创建主窗口
     root = tk.Tk()
-    app = MainApplication(root)
+    MainWindow(root)
+
+    aes_cipher = AESCipher("mvm19961210")
+    encrypt_key = get_or_create_key(aes_cipher)
+    print(f"encrypt_key : {encrypt_key}")
+    if encrypt_key:
+        decrypt_key = aes_cipher.decrypt(encrypt_key)
+        print(f"decrypt_key : {decrypt_key}")
+        VerifyWindow(root, decrypt_key)
+
     root.mainloop()
