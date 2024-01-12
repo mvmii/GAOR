@@ -78,7 +78,7 @@ class MainApplication:  # 模組化
         self.master = master
         self.master.title("Goopi自動下單")
         # 寬度和高度
-        self.master.geometry("920x550")
+        self.master.geometry("780x550")
         # 禁止水平和垂直的視窗大小調整
         self.master.resizable(False, False)
 
