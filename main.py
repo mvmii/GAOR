@@ -358,10 +358,10 @@ class MainApplication:  # 模組化
 
             # 检查元素的class属性是否包含'ng-hide'
             if 'ng-hide' in cart_status_element.get_attribute('class'):
-                self.show_log("購物車有商品，執行清空操作...")
+                self.show_log("購物車存在商品，清空中...")
                 # 执行清空购物车操作
                 delete_buttons = self.driver.find_elements(By.XPATH, "//a[contains(@ng-click, 'removeItemFromCart')]")
-                self.show_log(f"購物車數量:{delete_buttons}", False)
+                self.show_log(f"cart number:{delete_buttons}", False)
                 for button in delete_buttons:
                     self.driver.execute_script("arguments[0].click();", button)
                 # 可能需要添加额外的等待时间或检查以确保操作完成
@@ -375,7 +375,7 @@ class MainApplication:  # 模組化
         except TimeoutException:
             self.url_end("操作超時，無法[清除購物車]狀態。")
         except Exception as e:
-            self.show_log(f"無法確定[清除購物車]狀態：{e}", False)
+            self.show_log(f"find_and_clear_cart：{e}", False)
             self.url_end("無法確定[清除購物車]狀態。")
 
     def stop_search_product(self):
@@ -430,7 +430,7 @@ class MainApplication:  # 模組化
         except TimeoutException:
             self.url_end("操作超時，無法取得[下單流程]狀態。")
         except Exception as e:
-            self.show_log(f"無法確定[下單流程]狀態：{e}", False)
+            self.show_log(f"start_ordering_process：{e}", False)
             self.url_end("無法確定[下單流程]狀態")
 
     def get_add_cart_count_value(self):
@@ -467,7 +467,7 @@ class MainApplication:  # 模組化
                         match = re.search(r'/users/(\w+)/edit', href_value)
                         if match:
                             code = match.group(1)
-                            self.show_log(f"已登入。會員編號Url : {code}。")
+                            self.show_log(f"已登入。會員編號 : {code}。")
                             return True
                         else:
                             href_value = None
@@ -478,7 +478,8 @@ class MainApplication:  # 模組化
             self.url_end("操作超時，無法[檢查登入]狀態。")
             return None
         except Exception as e:
-            self.url_end(f"無法確定[檢查登入]狀態：{e}")
+            self.show_log(f"check_login : {e}。")
+            self.url_end("無法確定[檢查登入]狀態")
             return None
 
     def get_product_ky(self):
@@ -500,7 +501,7 @@ class MainApplication:  # 模組化
             if ky.strip():  # 檢查是否前後都空白
                 buy_list.append({"pName": ky.strip(), "color": color.get().strip(), "size": size_var.get()})
 
-        self.show_log(f"buy_list:{len(buy_list)}", False)
+        self.show_log(f"buy_list len:{len(buy_list)}", False)
         # 返回购买列表
         return buy_list
 
@@ -584,7 +585,7 @@ class MainApplication:  # 模組化
                         )
 
                         size = matched_product.get('size')
-                        self.show_log(f"size:{size}", False)
+                        self.show_log(f"product size:{size}", False)
                         if size != "無":
                             select_element = wait.until(EC.element_to_be_clickable((By.CLASS_NAME, "selectpicker")))
                             if select_element:
@@ -637,7 +638,7 @@ class MainApplication:  # 模組化
             self.show_log("操作超時，添加失敗。")
             return add_cart_count
         except Exception as e:
-            self.show_log(f"無法確定[商品加入購物車]狀態：{e}", False)
+            self.show_log(f"add_product_to_shopping_cart：{e}", False)
             self.show_log("添加失敗。")
             return add_cart_count
 
@@ -652,7 +653,7 @@ class MainApplication:  # 模組化
         except TimeoutException:
             return False
         except Exception as e:
-            self.show_log(f"無法確定該商品數量問題：{e}", False)
+            self.show_log(f"product_num_is_over：{e}", False)
             self.show_log("無法確定該商品數量問題")
             return None
 
@@ -695,7 +696,7 @@ class MainApplication:  # 模組化
         except TimeoutException:
             self.url_end("操作超時，無法取得[訂購流程]狀態。")
         except Exception as e:
-            self.show_log(f"無法確定[訂購流程]狀態：{e}", False)
+            self.show_log(f"checkout_products：{e}", False)
             self.url_end("無法確定[訂購流程]狀態，麻煩檢查商品下單數量是否超過以及再次確認是否為登入中")
 
     def search_711_store(self):
@@ -744,7 +745,7 @@ class MainApplication:  # 模組化
             self.show_log("操作超時，無法取得[搜尋門市]狀態。")
             return False
         except Exception as e:
-            self.show_log(f"無法確定[搜尋門市]狀態：{e}", False)
+            self.show_log(f"search_711_store：{e}", False)
             self.show_log("無法確定[搜尋門市]狀態")
             return False
 
@@ -762,7 +763,7 @@ class MainApplication:  # 模組化
                 except NoSuchElementException:
                     pass
                 except Exception as e:
-                    self.show_log(f"Error clicking on consent form: {e}")
+                    self.show_log(f"Error clicking on consent form: {e}", False)
 
                 try:
                     recipient_info = label.find_element(
@@ -779,7 +780,8 @@ class MainApplication:  # 模組化
             self.show_log("操作超時，無法取得[勾選同意書]狀態。")
             return False
         except Exception as e:
-            self.show_log(f"無法確定[勾選同意書]狀態：{e}")
+            self.show_log(f"check_the_consent_form: {e}", False)
+            self.show_log("無法確定[勾選同意書]狀態")
             return False
 
     def url_login(self):
@@ -830,7 +832,8 @@ class MainApplication:  # 模組化
         except TimeoutException:
             self.url_end("[登入]失敗 : 操作超時，元素無法交互")
         except Exception as e:
-            self.url_end(f"[登入]失敗 : 無法獲取亂碼：{e}")
+            self.show_log(f"login: {e}", False)
+            self.url_end("[登入]失敗 : 無法獲取亂碼")
 
     def login_is_success(self):
         try:
@@ -846,7 +849,8 @@ class MainApplication:  # 模組化
         except TimeoutException:
             return True
         except Exception as e:
-            self.url_end(f"[登入]失敗 : 無法獲取亂碼：{e}")
+            self.show_log(f"login_is_success: {e}", False)
+            self.url_end("獲取[登入]驗證失敗。")
             return False
 
     def show_log(self, msg, is_show=True):
