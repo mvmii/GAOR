@@ -22,6 +22,7 @@ import time
 import webbrowser
 from datetime import datetime
 from tkinter import messagebox
+import hardware as hd
 
 store_url = "https://www.goopi.co/categories/goopimade-goopi-%E5%AD%A4%E5%83%BB?sort_by=created_at&order_by=desc"
 login_url = "https://www.goopi.co/users/sign_in"
