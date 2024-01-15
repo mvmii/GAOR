@@ -78,7 +78,7 @@ class MainApplication:  # 模組化
         self.master = master
         self.master.title("Goopi自動下單")
         # 寬度和高度
-        self.master.geometry("780x550")
+        self.master.geometry("780x555")
         # 禁止水平和垂直的視窗大小調整
         self.master.resizable(False, False)
 
@@ -256,6 +256,10 @@ class MainApplication:  # 模組化
         self.size5_dropdown = OptionMenu(self.master.left_frame, self.size5_var, "1號", "2號", "3號", "無")
         self.size5_dropdown.grid(row=self.current_row, column=6, padx=self.px, pady=self.py, sticky="w")
         self.current_row += 1
+
+        # 版本
+        self.version_label = Label(self.master.left_frame, text="v 1.0.14")
+        self.version_label.grid(row=self.current_row, column=0, sticky="we", padx=self.px, pady=self.py, columnspan=8)
 
         # scrollbar
         self.scrollbar = Scrollbar(self.master.right_frame)
