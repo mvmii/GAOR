@@ -23,6 +23,7 @@ import webbrowser
 from datetime import datetime
 from tkinter import messagebox
 import hardware as hd
+from verify_window import VerifyWindow
 
 store_url = "https://www.goopi.co/categories/goopimade-goopi-%E5%AD%A4%E5%83%BB?sort_by=created_at&order_by=desc"
 login_url = "https://www.goopi.co/users/sign_in"
@@ -43,7 +44,7 @@ def validate_input(P):
         return False
 
 
-class MainApplication:  # 模組化
+class MainWindow:  # 模組化
     def __init__(self, master):
         # 設置變數
         # UI的row
@@ -183,7 +184,8 @@ class MainApplication:  # 模組化
         self.clear_cart_button.grid(row=self.current_row, column=1, sticky="we", padx=self.px, pady=self.py,
                                     columnspan=2)
         # 清除右邊訊息
-        self.clear_msg_button = Button(self.master.left_frame, text="清空右邊訊息", command=self.clear_message, width=18)
+        self.clear_msg_button = Button(self.master.left_frame, text="清空右邊訊息", command=self.clear_message,
+                                       width=18)
         self.clear_msg_button.grid(row=self.current_row, column=3, sticky="we", padx=self.px, pady=self.py,
                                    columnspan=2)
         # 開始下單
@@ -1015,5 +1017,8 @@ class MainApplication:  # 模組化
 if __name__ == "__main__":
     # 创建主窗口
     root = tk.Tk()
-    app = MainApplication(root)
+    MainWindow(root)
+
+    VerifyWindow(root, "123456789")
+
     root.mainloop()
