@@ -4,7 +4,8 @@
 #             pip install pyinstaller (將py轉exe)
 #             pyinstaller --onefile main.py  (產exe)
 #             pip install selenium  (以訪客身分開啟 Edge 並加載當前網址)
-
+#             pip install cryptography   (安全的加密功能)
+import base64
 # 簡單說明 GUI類型  目前先使用【Tkinter】來實作
 
 import os
@@ -22,6 +23,7 @@ import time
 import webbrowser
 from datetime import datetime
 from tkinter import messagebox
+from cryptography.fernet import Fernet
 
 store_url = "https://www.goopi.co/categories/goopimade-goopi-%E5%AD%A4%E5%83%BB?sort_by=created_at&order_by=desc"
 login_url = "https://www.goopi.co/users/sign_in"
@@ -1011,8 +1013,50 @@ class MainApplication:  # 模組化
     #         self.add_ky_button.config(state='normal')
 
 
+def decrypt_content(content, k):
+    fernet = Fernet(k)
+    return fernet.decrypt(content).decode()
+
+
+def encrypt_content(content, k):
+    fernet = Fernet(k)
+    return fernet.encrypt(content.encode())
+
+
 if __name__ == "__main__":
-    # 创建主窗口
-    root = tk.Tk()
-    app = MainApplication(root)
-    root.mainloop()
+    key = b'zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz'  # 替換成您的加密鑰匙
+    user_file = 'a'  # a 檔案名稱
+    # 檢查 a 檔案是否存在
+    if os.path.exists(user_file):
+        with open(user_file, 'rb') as file:
+            encrypted_content = file.read()
+            decrypted_content = decrypt_content(encrypted_content, key)
+            run_time = int(decrypted_content.split('=')[1])
+
+            if run_time < 9:
+                # 創建主窗口
+                root = tk.Tk()
+                app = MainApplication(root)
+                root.mainloop()
+
+                # 更新 RunTime 值並重新加密寫入
+                run_time += 1
+                new_content = f'RunTime={run_time}'
+                encrypted_content = encrypt_content(new_content, key)
+                with open(user_file, 'wb') as file1:
+                    file1.write(encrypted_content)
+            else:
+                # 顯示提示窗口
+                messagebox.showinfo("提示", "無法使用，RunTime 超過限制")
+    else:
+        # 如果 a 檔案不存在，則創建檔案
+        run_time = 1
+        new_content = f'RunTime={run_time}'
+        encrypted_content = encrypt_content(new_content, key)
+        with open(user_file, 'wb') as file2:
+            file2.write(encrypted_content)
+
+        # 創建主窗口
+        root = tk.Tk()
+        app = MainApplication(root)
+        root.mainloop()
