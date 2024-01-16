@@ -1,10 +1,17 @@
 # 第一次練習爬蟲並建立一個GUI  (GPT教學)
-# 安裝指令  :  pip install requests  (庫)
+# 安裝指令  :  python -m venv .venv  # 創建虛擬環境
+#            .venv\Scripts\activate  # 啟動虛擬環境（for Window）
+#            pip install -r requirements.txt   (安裝專案所需套件)
+#            pip install requests  (庫)
 #            pip install beautifulsoup4 (來解析 HTML，並找到相應的元素)
-#             pip install pyinstaller (將py轉exe)
-#             pyinstaller --onefile main.py  (產exe)
-#             pip install selenium  (以訪客身分開啟 Edge 並加載當前網址)
+#            pip install pyinstaller (將py轉exe)
+#            pip install selenium  (以訪客身分開啟 Edge 並加載當前網址)
+#            pip install git+https://github.com/ozgur/python-firebase  ( FireBase )
+#            pip install firebase-admin
+#            pip install google-cloud-firestore
 
+#            pyinstaller --onefile main.py  (產exe)
+#            pyinstaller --onefile --add-data "credentials.json;." main.py
 # 簡單說明 GUI類型  目前先使用【Tkinter】來實作
 
 import os
@@ -24,6 +31,7 @@ from datetime import datetime
 from tkinter import messagebox
 import hardware as hd
 from verify_window import VerifyWindow
+import fire_base as fb
 
 store_url = "https://www.goopi.co/categories/goopimade-goopi-%E5%AD%A4%E5%83%BB?sort_by=created_at&order_by=desc"
 login_url = "https://www.goopi.co/users/sign_in"
@@ -1015,6 +1023,7 @@ class MainWindow:  # 模組化
 
 
 if __name__ == "__main__":
+    # fb.show('test')
     # 创建主窗口
     root = tk.Tk()
     MainWindow(root)

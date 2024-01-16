@@ -1,3 +1,6 @@
-python -m venv venv  # 創建虛擬環境
-source venv/bin/activate  # 啟動虛擬環境（僅限 Unix 系統，Windows 使用 activate）
-pip install -r requirements.txt  # 安裝專案所需套件
+beautifulsoup4
+pyinstaller
+selenium
+git+https://github.com/ozgur/python-firebase
+firebase-admin
+google-cloud-firestore
