@@ -1,6 +1,5 @@
 beautifulsoup4
 pyinstaller
 selenium
-git+https://github.com/ozgur/python-firebase
 firebase-admin
 google-cloud-firestore
