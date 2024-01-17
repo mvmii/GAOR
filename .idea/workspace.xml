@@ -1,49 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
   <component name="ChangeListManager">
     <list default="true" id="3b48b73e-12c7-42c6-ba11-e7864cd99e9e" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.venv/Lib/site-packages/cachecontrol-0.13.1.dist-info/RECORD" beforeDir="false" afterPath="$PROJECT_DIR$/.venv/Lib/site-packages/cachecontrol-0.13.1.dist-info/RECORD" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.venv/Lib/site-packages/charset_normalizer-3.3.2.dist-info/RECORD" beforeDir="false" afterPath="$PROJECT_DIR$/.venv/Lib/site-packages/charset_normalizer-3.3.2.dist-info/RECORD" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.venv/Lib/site-packages/firebase/__init__.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.venv/Lib/site-packages/firebase/decorators.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.venv/Lib/site-packages/firebase/firebase.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.venv/Lib/site-packages/firebase/firebase_token_generator.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.venv/Lib/site-packages/firebase/jsonutil.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.venv/Lib/site-packages/firebase/lazy.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.venv/Lib/site-packages/firebase/multiprocess_pool.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.venv/Lib/site-packages/pip-23.2.1.dist-info/RECORD" beforeDir="false" afterPath="$PROJECT_DIR$/.venv/Lib/site-packages/pip-23.2.1.dist-info/RECORD" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.venv/Lib/site-packages/pyinstaller-6.3.0.dist-info/RECORD" beforeDir="false" afterPath="$PROJECT_DIR$/.venv/Lib/site-packages/pyinstaller-6.3.0.dist-info/RECORD" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.venv/Lib/site-packages/python_firebase-1.2.1.dist-info/INSTALLER" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.venv/Lib/site-packages/python_firebase-1.2.1.dist-info/LICENSE" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.venv/Lib/site-packages/python_firebase-1.2.1.dist-info/METADATA" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.venv/Lib/site-packages/python_firebase-1.2.1.dist-info/RECORD" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.venv/Lib/site-packages/python_firebase-1.2.1.dist-info/REQUESTED" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.venv/Lib/site-packages/python_firebase-1.2.1.dist-info/WHEEL" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.venv/Lib/site-packages/python_firebase-1.2.1.dist-info/direct_url.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.venv/Lib/site-packages/python_firebase-1.2.1.dist-info/top_level.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.venv/Lib/site-packages/rsa-4.9.dist-info/RECORD" beforeDir="false" afterPath="$PROJECT_DIR$/.venv/Lib/site-packages/rsa-4.9.dist-info/RECORD" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.venv/Scripts/doesitcache.exe" beforeDir="false" afterPath="$PROJECT_DIR$/.venv/Scripts/doesitcache.exe" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.venv/Scripts/normalizer.exe" beforeDir="false" afterPath="$PROJECT_DIR$/.venv/Scripts/normalizer.exe" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.venv/Scripts/pip.exe" beforeDir="false" afterPath="$PROJECT_DIR$/.venv/Scripts/pip.exe" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.venv/Scripts/pip3.11.exe" beforeDir="false" afterPath="$PROJECT_DIR$/.venv/Scripts/pip3.11.exe" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.venv/Scripts/pip3.exe" beforeDir="false" afterPath="$PROJECT_DIR$/.venv/Scripts/pip3.exe" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.venv/Scripts/pyi-archive_viewer.exe" beforeDir="false" afterPath="$PROJECT_DIR$/.venv/Scripts/pyi-archive_viewer.exe" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.venv/Scripts/pyi-bindepend.exe" beforeDir="false" afterPath="$PROJECT_DIR$/.venv/Scripts/pyi-bindepend.exe" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.venv/Scripts/pyi-grab_version.exe" beforeDir="false" afterPath="$PROJECT_DIR$/.venv/Scripts/pyi-grab_version.exe" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.venv/Scripts/pyi-makespec.exe" beforeDir="false" afterPath="$PROJECT_DIR$/.venv/Scripts/pyi-makespec.exe" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.venv/Scripts/pyi-set_version.exe" beforeDir="false" afterPath="$PROJECT_DIR$/.venv/Scripts/pyi-set_version.exe" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.venv/Scripts/pyinstaller.exe" beforeDir="false" afterPath="$PROJECT_DIR$/.venv/Scripts/pyinstaller.exe" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.venv/Scripts/pyrsa-decrypt.exe" beforeDir="false" afterPath="$PROJECT_DIR$/.venv/Scripts/pyrsa-decrypt.exe" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.venv/Scripts/pyrsa-encrypt.exe" beforeDir="false" afterPath="$PROJECT_DIR$/.venv/Scripts/pyrsa-encrypt.exe" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.venv/Scripts/pyrsa-keygen.exe" beforeDir="false" afterPath="$PROJECT_DIR$/.venv/Scripts/pyrsa-keygen.exe" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.venv/Scripts/pyrsa-priv2pub.exe" beforeDir="false" afterPath="$PROJECT_DIR$/.venv/Scripts/pyrsa-priv2pub.exe" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.venv/Scripts/pyrsa-sign.exe" beforeDir="false" afterPath="$PROJECT_DIR$/.venv/Scripts/pyrsa-sign.exe" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.venv/Scripts/pyrsa-verify.exe" beforeDir="false" afterPath="$PROJECT_DIR$/.venv/Scripts/pyrsa-verify.exe" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/fire_base.py" beforeDir="false" afterPath="$PROJECT_DIR$/fire_base.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.spec" beforeDir="false" afterPath="$PROJECT_DIR$/main.spec" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -67,6 +31,8 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
+    "Python.fire_base.executor": "Run",
+    "Python.main.executor": "Run",
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "git-widget-placeholder": "Skill/240115",
@@ -93,11 +59,15 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1705487328696</updated>
-      <workItem from="1705487330489" duration="464000" />
+      <workItem from="1705487330489" duration="2025000" />
     </task>
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/GAOR$fire_base.coverage" NAME="fire_base Coverage Results" MODIFIED="1705489041459" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/GAOR$main.coverage" NAME="main Coverage Results" MODIFIED="1705489363832" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>

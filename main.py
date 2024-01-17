@@ -2,16 +2,27 @@
 # 安裝指令  :  python -m venv .venv  # 創建虛擬環境
 #            .venv\Scripts\activate  # 啟動虛擬環境（for Window）
 #            pip install -r requirements.txt   (安裝專案所需套件)
-#            pip install requests  (庫)
+# requirements 文件裡的庫
 #            pip install beautifulsoup4 (來解析 HTML，並找到相應的元素)
 #            pip install pyinstaller (將py轉exe)
 #            pip install selenium  (以訪客身分開啟 Edge 並加載當前網址)
-#            pip install git+https://github.com/ozgur/python-firebase  ( FireBase )
 #            pip install firebase-admin
 #            pip install google-cloud-firestore
-
+# 目前暫時還不會用到的庫
+#            pip install requests  (庫)  (使用 ozgur 的 firebase 前需要先安裝)
+#            pip install python-firebase  (使用 ozgur 的 firebase 前需要先安裝)
+#            pip install git+https://github.com/ozgur/python-firebase
+#                         (因這個庫只支援到python 3.2，所以無法使用。ozgur 做的簡單使用firebase庫 )
+#     打包指令:
+#            --onefile 创建一个单一文件的可执行程序。
+#            --debug all 开启调试模式。
+#            --hidden-import=專案名稱  确保 [專案名稱] 被包含在打包的程序中。
+#            main.py 是您的主脚本文件。
+#        範例:
 #            pyinstaller --onefile main.py  (產exe)
 #            pyinstaller --onefile --add-data "credentials.json;." main.py
+#            pyinstaller --onefile --debug all --hidden-import=some_module main.py
+
 # 簡單說明 GUI類型  目前先使用【Tkinter】來實作
 
 import os
@@ -1023,7 +1034,7 @@ class MainWindow:  # 模組化
 
 
 if __name__ == "__main__":
-    # fb.show('test')
+    fb.get_data_by_key('test1')
     # 创建主窗口
     root = tk.Tk()
     MainWindow(root)
